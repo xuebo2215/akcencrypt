@@ -130,7 +130,31 @@ int akc_message_keys(const unsigned char *chain_key,
                      unsigned long message_idlen,
                      unsigned char **messagekey_out,
                      unsigned char **miv_out);
-  
+
+/**
+ * 消息签名
+ * @param my_spka 我的签名私钥
+ * @param datasignature 待签名数据
+ * @param datasignature_len
+ * @param signature_out 签名
+ @ Returns 1 if the signature generated successfully
+ */
+int akc_signature(const unsigned char *my_spka,
+                  const unsigned char *datasignature,
+                  unsigned long datasignature_len,
+                  unsigned char **signature_out);
+/**
+ * 消息签名验证
+ * @param their_spkb 签名公钥
+ * @param datasignature 待验签数据
+ * @param signature 签名
+ @ Returns 1 if the signature is valid, 0 if it is invalid.
+ */
+int akc_verify_signature(const unsigned char *their_spkb,
+                         const unsigned char *datasignature,
+                         unsigned long datasignature_len,
+                         const unsigned char *signature);
+    
 /**
  * 加密
  *

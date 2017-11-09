@@ -239,6 +239,56 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageKeyAndIV(JNIEnv* env
 }
 
 jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature(JNIEnv* env, jobject thiz,
+                                                               jbyteArray my_spka,
+                                                               jbyteArray datasignature){
+
+    unsigned long datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
+    const unsigned char *buf_my_spka = (unsigned char*)((*env)->GetByteArrayElements(env, my_spka, NULL));
+    const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+
+    unsigned char *signature;
+    int res =  akc_signature(buf_my_spka, buf_datasignature,datasignature_Len,&signature);
+
+    (*env)->ReleaseByteArrayElements(env, my_spka, (jbyte*)buf_my_spka, 0);
+    (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
+
+    jbyteArray jarray = NULL;
+    if (res==1){
+        jarray = (*env)->NewByteArray(env, AKC_PUBLIC_KEY_LEN);
+        (*env)->SetByteArrayRegion(env, jarray, 0, AKC_PUBLIC_KEY_LEN, (jbyte *)signature);
+    }
+
+    if (signature) free(signature);
+
+    if (jarray == NULL) {
+        return NULL;
+    }
+
+    return jarray;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature(JNIEnv* env, jobject thiz,
+                                                                     jbyteArray their_spkb,
+                                                                     jbyteArray datasignature,
+                                                                     jbyteArray signature){
+
+    unsigned long datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
+    const unsigned char *buf_their_spkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_spkb, NULL));
+    const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+    const unsigned char *buf_signature = (unsigned char*)((*env)->GetByteArrayElements(env, signature, NULL));
+
+    int res = akc_verify_signature(buf_their_spkb,buf_datasignature,datasignature_Len,buf_signature);
+
+    (*env)->ReleaseByteArrayElements(env, their_spkb, (jbyte*)buf_their_spkb, 0);
+    (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
+    (*env)->ReleaseByteArrayElements(env, signature, (jbyte*)buf_signature, 0);
+
+    return res;
+}
+
+jbyteArray
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEncryptData(JNIEnv* env, jobject thiz,
 																 jbyteArray input,
 																 jlong inlen,

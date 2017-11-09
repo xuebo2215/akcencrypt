@@ -84,6 +84,27 @@ public class AKCEncryptWrapper {
     * */
     public native byte[] NativeMessageKeyAndIV(byte[]chain_key,
                                                byte[]message_id);
+
+    /**
+     * 消息签名
+     * @param my_spka 我的签名私钥
+     * @param datasignature 待签名数据
+     * @ Returns signature_out
+     */
+    public native byte[] NativeSignature(byte[]my_spka,
+                                         byte[]datasignature);
+
+    /**
+     * 消息签名验证
+     * @param their_spkb 签名公钥
+     * @param datasignature 待验签数据
+     * @param signature 签名
+     *  @ Returns 1 if the signature is valid, 0 if it is invalid.
+     */
+    public native int NativeVerifySignature(byte[]their_spkb,
+                                               byte[]datasignature,
+                                               byte[]signature);
+
     /*
     *  加密
     * @param input 输入明文 byte数组
@@ -256,6 +277,16 @@ public class AKCEncryptWrapper {
         Log.d(TAG, "alice_send_encrypt:\r\n" + alice_send_encrypt);
         Log.d(TAG, "alice_send_dencrypt:\r\n" + alice_send_dencrypt);
         Log.d(TAG, "bob_recv_dencrypt:\r\n" + bob_recv_dencrypt);
+
+        byte signature[] = encryptWrapper.NativeSignature(alicesign_private,alice_send_messageencrypt);
+        Log.d(TAG, "signature:\r\n" + encryptWrapper.getHexString(signature));
+
+        int ver_signature_alice = encryptWrapper.NativeVerifySignature(alicesign_public,alice_send_messageencrypt,signature);
+        Log.d(TAG, "ver_signature_alice:\r\n" + ver_signature_alice);
+
+        int ver_signature_bob = encryptWrapper.NativeVerifySignature(bobsign_public,alice_send_messageencrypt,signature);
+        Log.d(TAG, "ver_signature_bob:\r\n" + ver_signature_bob);
+
     }
 
 }

@@ -339,6 +339,47 @@ int akc_message_keys(const unsigned char *chain_key,
     return AKC_MESSAGE_KEY_LEN;
 }
 
+int akc_signature(const unsigned char *my_spka,
+                  const unsigned char *datasignature,
+                  unsigned long datasignature_len,
+                  unsigned char **signature_out)
+{
+    int result = 0;
+    unsigned char *signature = 0;
+    unsigned char randomkey[AKC_KEY_LEN];
+    result = genRandomString(randomkey,AKC_KEY_LEN);
+    unsigned char r[AKC_KEY_LEN];
+    unsigned char s[AKC_KEY_LEN];
+    unsigned char id_hash[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)datasignature,(int)datasignature_len, id_hash);
+    result = ecdsa_sign(r, s, (unsigned char*)my_spka, randomkey, id_hash);
+    if (result == 1) {
+        signature = malloc(AKC_KEY_LEN*2);
+        memcpy(signature, r , AKC_KEY_LEN);
+        memcpy(signature + AKC_KEY_LEN, s , AKC_KEY_LEN);
+        *signature_out = signature;
+    }
+    return result;
+}
+
+int akc_verify_signature(const unsigned char *their_spkb,
+                         const unsigned char *datasignature,
+                         unsigned long datasignature_len,
+                         const unsigned char *signature)
+{
+    unsigned char id_hash[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)datasignature,(int)datasignature_len, id_hash);
+    EccPoint p_publicKey;
+    //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
+    memcpy(p_publicKey.x, their_spkb, AKC_KEY_LEN);
+    memcpy(p_publicKey.y, their_spkb+AKC_KEY_LEN, AKC_KEY_LEN);
+    unsigned char r[AKC_KEY_LEN];
+    unsigned char s[AKC_KEY_LEN];
+    memcpy(r, signature, AKC_KEY_LEN);
+    memcpy(s, signature+AKC_KEY_LEN, AKC_KEY_LEN);
+    return ecdsa_verify(&p_publicKey, id_hash, r, s);
+}
+
 unsigned long akc_sm4_encrypt(const unsigned char *input,
                               unsigned long inlen,
                               const unsigned char *key,
