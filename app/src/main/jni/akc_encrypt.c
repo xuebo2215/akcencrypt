@@ -12,7 +12,7 @@ int genRandomString(unsigned char* ouput,int length)
 {
     int flag, i;
     srand( (unsigned)time( NULL ) + rand());
-    for (i = 0; i < length - 1; i++)
+    for (i = 0; i < length; i++)
     {
         flag = rand() % 3;
         switch (flag)
@@ -34,61 +34,25 @@ int genRandomString(unsigned char* ouput,int length)
     return 0;
 }  
 
-int akc_generate_private_key(unsigned char **private_key)
-{
-    int result = 0;
-    unsigned char *key = 0;
-    key = malloc(AKC_KEY_LEN);
-    if(!key) {
-        result = -1;
-        goto complete;
-    }
-    result = genRandomString(key,AKC_KEY_LEN);
-    key[0] &= 248;
-    key[31] &= 127;
-    key[31] |= 64;
-complete:
-    if(result < 0) {
-        if(key) free(key);
-    }
-    else {
-        *private_key = key;
-    }
-    return result;
-}
-
-int akc_generate_public_key(unsigned char **public_key, const unsigned char *private_key)
-{
-    static const unsigned char basepoint[32] = {9};
-    int result = 0;
-    unsigned char *key = malloc(AKC_KEY_LEN);
-    result = curve25519_donna(key, private_key, basepoint);
-    if(result == 0) {
-        *public_key = key;
-        return 0;
-    }
-    else {
-        if (key) free(key);
-        return -1;
-    }
-}
-
 int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_key)
 {
     int result = 0;
     unsigned char *key_private = 0;
     unsigned char *key_public = 0;
-    
-    result = akc_generate_private_key(&key_private);
+    unsigned char private[AKC_KEY_LEN];
+    unsigned char randomkey[AKC_KEY_LEN];
+    result = genRandomString(randomkey,AKC_KEY_LEN);
+    EccPoint public;
+    result = ecc_make_key(&public, private, randomkey);
     if(result < 0) {
         goto complete;
     }
-    
-    result = akc_generate_public_key(&key_public, key_private);
-    if(result < 0) {
-        goto complete;
-    }
-    
+    //合并public，前32位public.x，后32位public.y
+    key_public = malloc(AKC_PUBLIC_KEY_LEN);
+    memcpy(key_public, public.x , AKC_KEY_LEN);
+    memcpy(key_public + AKC_KEY_LEN, public.y , AKC_KEY_LEN);
+    key_private = malloc(AKC_KEY_LEN);
+    memcpy(key_private, private , AKC_KEY_LEN);
 complete:
     if(result >= 0) {
         *private_key = key_private;
@@ -98,7 +62,7 @@ complete:
 }
 
 /**
- * 公私钥DH算法
+ * 公私钥ECDH算法
  *
  *
  * @param shared_key_data DH值
@@ -106,30 +70,30 @@ complete:
  * @param private_key 私钥
  * reuturn shared_key_data 长度
  */
-int akc_calculate_agreement(unsigned char **shared_key_data, const unsigned char *public_key, const unsigned char *private_key)
+int akc_calculate_ecdh(unsigned char **shared_key_data, const unsigned char *public_key, const unsigned char *private_key)
 {
-    unsigned char *key = 0;
+    unsigned char *shared_secret = 0;
+    unsigned char p_secret[AKC_KEY_LEN];
+    EccPoint p_publicKey;
+    unsigned char p_random[AKC_KEY_LEN];
     int result = 0;
-    
     if(!public_key || !private_key) {
         return result;
     }
+    result = genRandomString(p_random,AKC_KEY_LEN);
     
-    key = malloc(AKC_KEY_LEN);
-    if(!key) {
-        return result;
-    }
+    //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
+    memcpy(p_publicKey.x, public_key, AKC_KEY_LEN);
+    memcpy(p_publicKey.y, public_key+AKC_KEY_LEN, AKC_KEY_LEN);
     
-    result = curve25519_donna(key, private_key, public_key);
-    
-    if(result == 0) {
-        *shared_key_data = key;
+    result = ecdh_shared_secret(p_secret, &p_publicKey,(unsigned char*) private_key, p_random);
+    if(result > 0) {
+        shared_secret = malloc(AKC_KEY_LEN);
+        memcpy(shared_secret, p_secret , AKC_KEY_LEN);
+        *shared_key_data = shared_secret;
         return AKC_KEY_LEN;
     }
     else {
-        if(key) {
-            free(key);
-        }
         return result;
     }
 }
@@ -165,25 +129,25 @@ int akc_sender_ecdh(unsigned char **shared_ecdh_out,
     unsigned char *dh3 = 0 ;
     unsigned char *dh4 = 0 ;
 
-    dh1len = akc_calculate_agreement(&dh1, their_spkb ,my_idka);
+    dh1len = akc_calculate_ecdh(&dh1, their_spkb ,my_idka);
     if (dh1len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh2len = akc_calculate_agreement(&dh2, their_idkb, my_otpka);
+    dh2len = akc_calculate_ecdh(&dh2, their_idkb, my_otpka);
     if (dh2len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh3len = akc_calculate_agreement(&dh3, their_spkb, my_otpka);
+    dh3len = akc_calculate_ecdh(&dh3, their_spkb, my_otpka);
     if (dh3len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh4len = akc_calculate_agreement(&dh4, their_otpkb, my_otpka);
+    dh4len = akc_calculate_ecdh(&dh4, their_otpkb, my_otpka);
     if (dh4len <= 0) {
         result = -1;
         goto complete;
@@ -233,25 +197,25 @@ int akc_receiver_ecdh(unsigned char **shared_ecdh_out,
     unsigned char *dh3 = 0 ;
     unsigned char *dh4 = 0 ;
     
-    dh1len = akc_calculate_agreement(&dh1, their_idkb ,my_spka);
+    dh1len = akc_calculate_ecdh(&dh1, their_idkb ,my_spka);
     if (dh1len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh2len = akc_calculate_agreement(&dh2, their_otpkb, my_idka);
+    dh2len = akc_calculate_ecdh(&dh2, their_otpkb, my_idka);
     if (dh2len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh3len = akc_calculate_agreement(&dh3, their_otpkb, my_spka);
+    dh3len = akc_calculate_ecdh(&dh3, their_otpkb, my_spka);
     if (dh3len <= 0) {
         result = -1;
         goto complete;
     }
     
-    dh4len = akc_calculate_agreement(&dh4, their_otpkb, my_otpka);
+    dh4len = akc_calculate_ecdh(&dh4, their_otpkb, my_otpka);
     if (dh4len <= 0) {
         result = -1;
         goto complete;
@@ -283,9 +247,9 @@ int akc_sender_root_key(const unsigned char *my_idka,
     sm3(root_dh,sender_ecdh_len, output);
     unsigned char * key = malloc(AKC_KEY_LEN);
     memcpy(key, output , AKC_KEY_LEN);
-    if (root_dh) free(root_dh);
     memset(output, 0, AKC_KEY_LEN);
     *root_key_out = key;
+    if (root_dh) free(root_dh);
     return AKC_KEY_LEN;
 }
 
@@ -302,9 +266,9 @@ int akc_receiver_root_key(const unsigned char *their_idkb,
     sm3(root_dh,receiver_ecdh_len, output);
     unsigned char * key = malloc(AKC_KEY_LEN);
     memcpy(key, output , AKC_KEY_LEN);
-    if (root_dh) free(root_dh);
-    *root_key_out = key;
     memset(output, 0, AKC_KEY_LEN);
+    *root_key_out = key;
+    if (root_dh) free(root_dh);
     return AKC_KEY_LEN;
 }
 

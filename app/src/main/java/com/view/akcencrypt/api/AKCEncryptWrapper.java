@@ -29,7 +29,7 @@ public class AKCEncryptWrapper {
 
     /*
     *  生成keypair
-    *  return 64位byte数组 ,前32位公钥，后32位私钥
+    *  return 64 + 32 位byte数组 ,前64位公钥，后32位私钥
     * */
     public native byte[] NativeGeneratekeyPair();
 
@@ -128,50 +128,50 @@ public class AKCEncryptWrapper {
         final AKCEncryptWrapper encryptWrapper = AKCEncryptWrapper.getInstance();
 
         byte[] aliceid = encryptWrapper.NativeGeneratekeyPair();
-        byte[] aliceid_public = new byte[32];
+        byte[] aliceid_public = new byte[64];
         byte[] aliceid_private = new byte[32];
-        System.arraycopy(aliceid, 0, aliceid_public,0, 32);
-        System.arraycopy(aliceid, 32, aliceid_private,0, 32);
+        System.arraycopy(aliceid, 0, aliceid_public,0, 64);
+        System.arraycopy(aliceid, 64, aliceid_private,0, 32);
         Log.d(TAG, "aliceid_public:\r\n" + encryptWrapper.getHexString(aliceid_public));
         Log.d(TAG, "aliceid_private:\r\n" + encryptWrapper.getHexString(aliceid_private));
 
         byte[] alicesign = encryptWrapper.NativeGeneratekeyPair();
-        byte[] alicesign_public = new byte[32];
+        byte[] alicesign_public = new byte[64];
         byte[] alicesign_private = new byte[32];
-        System.arraycopy(alicesign, 0, alicesign_public,0, 32);
-        System.arraycopy(alicesign, 32, alicesign_private,0, 32);
+        System.arraycopy(alicesign, 0, alicesign_public,0, 64);
+        System.arraycopy(alicesign, 64, alicesign_private,0, 32);
         Log.d(TAG, "alicesign_public:\r\n" + encryptWrapper.getHexString(alicesign_public));
         Log.d(TAG, "alicesign_private:\r\n" + encryptWrapper.getHexString(alicesign_private));
 
         byte[] aliceopk = encryptWrapper.NativeGeneratekeyPair();
-        byte[] aliceopk_public = new byte[32];
+        byte[] aliceopk_public = new byte[64];
         byte[] aliceopk_private = new byte[32];
-        System.arraycopy(aliceopk, 0, aliceopk_public,0, 32);
-        System.arraycopy(aliceopk, 32, aliceopk_private,0, 32);
+        System.arraycopy(aliceopk, 0, aliceopk_public,0, 64);
+        System.arraycopy(aliceopk, 64, aliceopk_private,0, 32);
         Log.d(TAG, "aliceopk_public:\r\n" + encryptWrapper.getHexString(aliceopk_public));
         Log.d(TAG, "aliceopk_private:\r\n" + encryptWrapper.getHexString(aliceopk_private));
 
         byte[] bobid = encryptWrapper.NativeGeneratekeyPair();
-        byte[] bobid_public = new byte[32];
+        byte[] bobid_public = new byte[64];
         byte[] bobid_private = new byte[32];
-        System.arraycopy(bobid, 0, bobid_public,0, 32);
-        System.arraycopy(bobid, 32, bobid_private,0, 32);
+        System.arraycopy(bobid, 0, bobid_public,0, 64);
+        System.arraycopy(bobid, 64, bobid_private,0, 32);
         Log.d(TAG, "bobid_public:\r\n" + encryptWrapper.getHexString(bobid_public));
         Log.d(TAG, "bobid_private:\r\n" + encryptWrapper.getHexString(bobid_private));
 
         byte[] bobsign = encryptWrapper.NativeGeneratekeyPair();
-        byte[] bobsign_public = new byte[32];
+        byte[] bobsign_public = new byte[64];
         byte[] bobsign_private = new byte[32];
-        System.arraycopy(bobsign, 0, bobsign_public,0, 32);
-        System.arraycopy(bobsign, 32, bobsign_private,0, 32);
+        System.arraycopy(bobsign, 0, bobsign_public,0, 64);
+        System.arraycopy(bobsign, 64, bobsign_private,0, 32);
         Log.d(TAG, "bobsign_public:\r\n" + encryptWrapper.getHexString(bobsign_public));
         Log.d(TAG, "bobsign_private:\r\n" + encryptWrapper.getHexString(bobsign_private));
 
         byte[] bobopk = encryptWrapper.NativeGeneratekeyPair();
-        byte[] bobopk_public = new byte[32];
+        byte[] bobopk_public = new byte[64];
         byte[] bobopk_private = new byte[32];
-        System.arraycopy(bobopk, 0, bobopk_public,0, 32);
-        System.arraycopy(bobopk, 32, bobopk_private,0, 32);
+        System.arraycopy(bobopk, 0, bobopk_public,0, 64);
+        System.arraycopy(bobopk, 64, bobopk_private,0, 32);
         Log.d(TAG, "bobopk_public:\r\n" + encryptWrapper.getHexString(bobopk_public));
         Log.d(TAG, "bobopk_private:\r\n" + encryptWrapper.getHexString(bobopk_private));
 

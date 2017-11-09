@@ -17,5 +17,5 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 LOCAL_MODULE    := akcencrypt
-LOCAL_SRC_FILES :=  com_view_akcencrypt_api_AKCEncryptWrapper.c akc_encrypt.c curve25519-donna.c sm3.c sm4.c
+LOCAL_SRC_FILES :=  com_view_akcencrypt_api_AKCEncryptWrapper.c akc_encrypt.c sm2.c sm3.c sm4.c
 include $(BUILD_SHARED_LIBRARY)

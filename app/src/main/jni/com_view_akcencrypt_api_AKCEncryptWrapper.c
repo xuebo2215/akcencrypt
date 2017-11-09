@@ -70,12 +70,12 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeGeneratekeyPair(JNIEnv* env
 	unsigned char *private_key = 0;
 	akc_generate_key_pair(&public_key,&private_key);
 
-	unsigned char * buff_publicKeyAndprivateKey = malloc(AKC_KEY_LEN*2);
-	memcpy(buff_publicKeyAndprivateKey, public_key , AKC_KEY_LEN);
-	memcpy(buff_publicKeyAndprivateKey+AKC_KEY_LEN, private_key, AKC_KEY_LEN);
+	unsigned char * buff_publicKeyAndprivateKey = malloc(AKC_PUBLIC_KEY_LEN + AKC_KEY_LEN);
+	memcpy(buff_publicKeyAndprivateKey, public_key , AKC_PUBLIC_KEY_LEN);
+	memcpy(buff_publicKeyAndprivateKey+AKC_PUBLIC_KEY_LEN, private_key, AKC_KEY_LEN);
 
-	jbyteArray jarray = (*env)->NewByteArray(env, AKC_KEY_LEN*2);
-	(*env)->SetByteArrayRegion(env, jarray, 0, AKC_KEY_LEN*2, (jbyte *)buff_publicKeyAndprivateKey);
+	jbyteArray jarray = (*env)->NewByteArray(env, AKC_PUBLIC_KEY_LEN + AKC_KEY_LEN);
+	(*env)->SetByteArrayRegion(env, jarray, 0, AKC_PUBLIC_KEY_LEN + AKC_KEY_LEN, (jbyte *)buff_publicKeyAndprivateKey);
 
 	if (public_key) free(public_key);
 	if (private_key) free(private_key);

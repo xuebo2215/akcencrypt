@@ -6,6 +6,7 @@
 //  Copyright © 2017年 Aegis Inc. All rights reserved.
 //
 #define AKC_KEY_LEN 32
+#define AKC_PUBLIC_KEY_LEN 64
 #define AKC_MESSAGE_KEY_LEN 16
 #define AKC_IV_LEN 16
 #define MAX_FILE_DATA_BLOCK 512
@@ -31,7 +32,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include "curve25519-donna.h"
+#include "sm2.h"
 #include "sm3.h"
 #include "sm4.h"
 
@@ -50,7 +51,7 @@ extern "C" {
  * 生成公私钥对
  *
  *
- * @param public_key 公钥
+ * @param public_key 公钥 ，公钥共64位 前32位publicX，后32位publicY
  * @param private_key 私钥
  * reuturn 0 成功
  */
