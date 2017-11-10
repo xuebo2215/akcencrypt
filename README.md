@@ -10,3 +10,7 @@ SM2使用了https://github.com/Aries-orz/nano-sm2
 
 #sm4
 使用了goldboar (goldboar@163.com)实现的代码
+
+#JNI
+java调用接口 AKCEncryptWrapper
+使用JNI NDK编译
