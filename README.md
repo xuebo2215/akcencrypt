@@ -14,3 +14,5 @@ SM2使用了https://github.com/Aries-orz/nano-sm2
 #JNI
 java调用接口 AKCEncryptWrapper
 使用JNI NDK编译
+
+#PS 该工程使用的是 Android Studio 3.0
