@@ -910,7 +910,7 @@ int ecdsa_verify(EccPoint *p_publicKey, uint8_t p_hash[NUM_ECC_DIGITS], uint8_t 
 
     uint8_t t[NUM_ECC_DIGITS];
     vli_modAdd(t, r, s, curve_n); // r + s
-
+    
     /* Calculate l_sum = G + Q. */
     vli_set(l_sum.x, p_publicKey->x);
     vli_set(l_sum.y, p_publicKey->y);

@@ -8,6 +8,7 @@
  */
 #ifndef XYSSL_SM3_H
 #define XYSSL_SM3_H
+#include <stdint.h>
 
 
 /**
@@ -15,8 +16,8 @@
  */
 typedef struct
 {
-    unsigned long total[2];     /*!< number of bytes processed  */
-    unsigned long state[8];     /*!< intermediate digest state  */
+    uint32_t total[2];     /*!< number of bytes processed  */
+    uint32_t state[8];     /*!< intermediate digest state  */
     unsigned char buffer[64];   /*!< data block being processed */
 
     unsigned char ipad[64];     /*!< HMAC: inner padding        */

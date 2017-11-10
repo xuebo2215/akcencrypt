@@ -15,7 +15,6 @@
 // Sample 2 
 // Input:"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 // Outpuf:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
-
 #include "sm3.h"
 #include <string.h>
 #include <stdio.h>
@@ -26,10 +25,10 @@
 #ifndef GET_ULONG_BE
 #define GET_ULONG_BE(n,b,i)                             \
 {                                                       \
-    (n) = ( (unsigned long) (b)[(i)    ] << 24 )        \
-        | ( (unsigned long) (b)[(i) + 1] << 16 )        \
-        | ( (unsigned long) (b)[(i) + 2] <<  8 )        \
-        | ( (unsigned long) (b)[(i) + 3]       );       \
+    (n) = ( (uint32_t) (b)[(i)    ] << 24 )        \
+        | ( (uint32_t) (b)[(i) + 1] << 16 )        \
+        | ( (uint32_t) (b)[(i) + 2] <<  8 )        \
+        | ( (uint32_t) (b)[(i) + 3]       );       \
 }
 #endif
 
@@ -42,6 +41,18 @@
     (b)[(i) + 3] = (unsigned char) ( (n)       );       \
 }
 #endif
+
+#define FF0(x,y,z) ( (x) ^ (y) ^ (z))
+#define FF1(x,y,z) (((x) & (y)) | ( (x) & (z)) | ( (y) & (z)))
+
+#define GG0(x,y,z) ( (x) ^ (y) ^ (z))
+#define GG1(x,y,z) (((x) & (y)) | ( (~(x)) & (z)) )
+
+#define  SHL(x,n) (((x) & 0xFFFFFFFF) << n%32)
+#define ROTL(x,n) (SHL((x),n) | ((x) >> (32 - n%32)))
+
+#define P0(x) ((x) ^  ROTL((x),9) ^ ROTL((x),17))
+#define P1(x) ((x) ^  ROTL((x),15) ^ ROTL((x),23))
 
 /*
  * SM3 context setup
@@ -64,10 +75,10 @@ void sm3_starts( sm3_context *ctx )
 
 static void sm3_process( sm3_context *ctx, unsigned char data[64] )
 {
-    unsigned long SS1, SS2, TT1, TT2, W[68],W1[64];
-    unsigned long A, B, C, D, E, F, G, H;
-	unsigned long T[64];
-	unsigned long Temp1,Temp2,Temp3,Temp4,Temp5;
+    uint32_t SS1, SS2, TT1, TT2, W[68],W1[64];
+    uint32_t A, B, C, D, E, F, G, H;
+	uint32_t T[64];
+	uint32_t Temp1,Temp2,Temp3,Temp4,Temp5;
 	int j;
 #ifdef _DEBUG
 	int i;
@@ -109,19 +120,6 @@ static void sm3_process( sm3_context *ctx, unsigned char data[64] )
 		printf("%08x ",W[i]);
 	printf("\n");
 #endif
-
-#define FF0(x,y,z) ( (x) ^ (y) ^ (z)) 
-#define FF1(x,y,z) (((x) & (y)) | ( (x) & (z)) | ( (y) & (z)))
-
-#define GG0(x,y,z) ( (x) ^ (y) ^ (z)) 
-#define GG1(x,y,z) (((x) & (y)) | ( (~(x)) & (z)) )
-
-
-#define  SHL(x,n) (((x) & 0xFFFFFFFF) << n)
-#define ROTL(x,n) (SHL((x),n) | ((x) >> (32 - n)))
-
-#define P0(x) ((x) ^  ROTL((x),9) ^ ROTL((x),17)) 
-#define P1(x) ((x) ^  ROTL((x),15) ^ ROTL((x),23)) 
 
 	for(j = 16; j < 68; j++ )
 	{
@@ -233,7 +231,7 @@ static void sm3_process( sm3_context *ctx, unsigned char data[64] )
 void sm3_update( sm3_context *ctx, unsigned char *input, int ilen )
 {
     int fill;
-    unsigned long left;
+    uint32_t left;
 
     if( ilen <= 0 )
         return;
@@ -244,7 +242,7 @@ void sm3_update( sm3_context *ctx, unsigned char *input, int ilen )
     ctx->total[0] += ilen;
     ctx->total[0] &= 0xFFFFFFFF;
 
-    if( ctx->total[0] < (unsigned long) ilen )
+    if( ctx->total[0] < (uint32_t) ilen )
         ctx->total[1]++;
 
     if( left && ilen >= fill )
@@ -284,8 +282,8 @@ static const unsigned char sm3_padding[64] =
  */
 void sm3_finish( sm3_context *ctx, unsigned char output[32] )
 {
-    unsigned long last, padn;
-    unsigned long high, low;
+    uint32_t last, padn;
+    uint32_t high, low;
     unsigned char msglen[8];
 
     high = ( ctx->total[0] >> 29 )

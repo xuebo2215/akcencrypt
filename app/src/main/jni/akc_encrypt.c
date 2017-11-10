@@ -32,7 +32,30 @@ int genRandomString(unsigned char* ouput,int length)
         }
     }
     return 0;
-}  
+}
+
+unsigned char * sm3ABCTEST()
+{
+    unsigned char test[AKC_KEY_LEN] = {0};
+    sm3((unsigned char*)"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",64, test);
+    unsigned char *testsm3 = malloc(32);
+    memcpy(testsm3, test , AKC_KEY_LEN);
+    return testsm3;
+}
+size_t sm4ABC_ENCRYPT_TEST(unsigned char **output)
+{
+    const unsigned char key[AKC_MESSAGE_KEY_LEN] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
+    const unsigned char iv[AKC_IV_LEN] = {0x32, 0x5E, 0x22, 0x47, 0x58, 0xB0, 0x7C, 0x10, 0x66, 0xBB, 0xC1, 0x5A, 0xC5, 0x46, 0x89, 0xED};
+    size_t len = akc_sm4_encrypt((unsigned char*)"abc", 3, key, iv, output);
+    return len;
+}
+size_t sm4ABC_DEENCRYPT_TEST(const unsigned char *input,size_t inlen,unsigned char **output)
+{
+    const unsigned char key[AKC_MESSAGE_KEY_LEN] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
+    const unsigned char iv[AKC_IV_LEN] = {0x32, 0x5E, 0x22, 0x47, 0x58, 0xB0, 0x7C, 0x10, 0x66, 0xBB, 0xC1, 0x5A, 0xC5, 0x46, 0x89, 0xED};
+    size_t len =  akc_sm4_decrypt(input, inlen, key, iv, output);
+    return len;
+}
 
 int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_key)
 {
@@ -304,25 +327,52 @@ int akc_chain_key_next( const unsigned char *chain_key, unsigned char **chain_ke
     return AKC_KEY_LEN;
 }
 
-int akc_message_keys(const unsigned char *chain_key,
-                     const unsigned char *message_id,
-                     unsigned long message_idlen,
-                     unsigned char **messagekey_out,
-                     unsigned char **miv_out)
+int akc_message_headkey(const unsigned char *my_idka,
+                        const unsigned char *their_idkb,
+                        unsigned char **key_out)
 {
-#ifdef ANDROID
-    LOGD("akc_message_keys  message_idlen=%lu  strlen((const char*)message_id=%lu ", message_idlen,(unsigned long)strlen((const char*)message_id));
-#endif
+    akc_calculate_ecdh(key_out, their_idkb ,my_idka);
+    return 1;
+}
 
-#ifdef AKCENCRYPT_DEBUG
-    printf("akc_message_keys  message_idlen=%lu  strlen((const char*)message_id=%lu ",message_idlen,strlen((const char*)message_id));
-#endif
+int akc_message_mf(const unsigned char *mfplain,
+                   size_t mflen,
+                   unsigned char **mf_out)
+{
+    unsigned char message_mf[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)mfplain,(int)mflen, message_mf);
+    unsigned char * mf = malloc(AKC_KEY_LEN);
+    memcpy(mf, message_mf , AKC_KEY_LEN);
+    *mf_out = mf;
+    return 1;
+}
+
+int akc_message_HMAC(const unsigned char *input,
+                     size_t inlen,
+                     const unsigned char *mackey,
+                     unsigned char **hmac_out)
+{
     unsigned char output[AKC_KEY_LEN] = {0};
-    unsigned char messageid[AKC_KEY_LEN] = {0};
-    sm3((unsigned char *)message_id,(int)message_idlen, messageid);
+    sm3_hmac((unsigned char*)mackey, 32, (unsigned char*)input, (int)inlen, output);
+    unsigned char * hamc = malloc(AKC_KEY_LEN);
+    memcpy(hamc, output , AKC_KEY_LEN);
+    *hmac_out = hamc;
+    return 1;
+}
+
+int akc_message_keys(const unsigned char *chain_key,
+                     const unsigned char *message_mf,
+                     size_t message_mf_len,
+                     unsigned char **messagekey_out,
+                     unsigned char **miv_out,
+                     unsigned char **mac_out)
+{
+    unsigned char output[AKC_KEY_LEN] = {0};
+    unsigned char message_mac[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)message_mf,(int)message_mf_len, message_mac);
     unsigned char * buff = malloc(AKC_KEY_LEN*2);
     memcpy(buff, chain_key , AKC_KEY_LEN);
-    memcpy(buff+AKC_KEY_LEN, messageid, AKC_KEY_LEN);
+    memcpy(buff+AKC_KEY_LEN, message_mac, AKC_KEY_LEN);
     sm3(buff,AKC_KEY_LEN*2,output);
     
     unsigned char * messagekey = malloc(AKC_MESSAGE_KEY_LEN);
@@ -333,15 +383,19 @@ int akc_message_keys(const unsigned char *chain_key,
     memcpy(messageiv, output+AKC_MESSAGE_KEY_LEN , AKC_MESSAGE_KEY_LEN);
     *miv_out = messageiv;
     
+    unsigned char * messagemac = malloc(AKC_KEY_LEN);
+    memcpy(messagemac, message_mac , AKC_KEY_LEN);
+    *mac_out = messagemac;
+    
     if (buff) free(buff);
     memset(output, 0, AKC_KEY_LEN);
-    memset(messageid, 0, AKC_KEY_LEN);
-    return AKC_MESSAGE_KEY_LEN;
+    memset(message_mac, 0, AKC_KEY_LEN);
+    return 1;
 }
 
 int akc_signature(const unsigned char *my_spka,
                   const unsigned char *datasignature,
-                  unsigned long datasignature_len,
+                  size_t datasignature_len,
                   unsigned char **signature_out)
 {
     int result = 0;
@@ -364,7 +418,7 @@ int akc_signature(const unsigned char *my_spka,
 
 int akc_verify_signature(const unsigned char *their_spkb,
                          const unsigned char *datasignature,
-                         unsigned long datasignature_len,
+                         size_t datasignature_len,
                          const unsigned char *signature)
 {
     unsigned char id_hash[AKC_KEY_LEN] = {0};
@@ -380,13 +434,13 @@ int akc_verify_signature(const unsigned char *their_spkb,
     return ecdsa_verify(&p_publicKey, id_hash, r, s);
 }
 
-unsigned long akc_sm4_encrypt(const unsigned char *input,
-                              unsigned long inlen,
+size_t akc_sm4_encrypt(const unsigned char *input,
+                              size_t inlen,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output)
 {
-    unsigned long result = 0;
+    size_t result = 0;
     //补位
     size_t plainInDataLength = inlen;
     size_t paddingLength = AKC_IV_LEN - plainInDataLength % AKC_IV_LEN;
@@ -420,13 +474,13 @@ unsigned long akc_sm4_encrypt(const unsigned char *input,
     return result;
 }
 
-unsigned long akc_sm4_decrypt(const unsigned char *input,
-                              unsigned long inlen,
+size_t akc_sm4_decrypt(const unsigned char *input,
+                              size_t inlen,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output)
 {
-    unsigned long result = 0;
+    size_t result = 0;
     unsigned char iv[AKC_IV_LEN];
     memcpy(iv, miv, AKC_IV_LEN);
     unsigned char sm4Key[AKC_MESSAGE_KEY_LEN];

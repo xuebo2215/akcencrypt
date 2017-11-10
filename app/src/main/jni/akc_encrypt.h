@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include "sm2.h"
 #include "sm3.h"
 #include "sm4.h"
@@ -42,21 +43,26 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-
-
-
+    
+// 测试方法
+// Output:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
+unsigned char * sm3ABCTEST();
+    
+// Output:f3f1d0c3 dedcbfd5 6fba1bf0 9f21d44a
+size_t sm4ABC_ENCRYPT_TEST(unsigned char **output);
+    
+// Output:616263 UTF-8 abc
+size_t sm4ABC_DEENCRYPT_TEST(const unsigned char *input,size_t inlen,unsigned char **output);
 /**
  * 生成公私钥对
  *
  *
  * @param public_key 公钥 ，公钥共64位 前32位publicX，后32位publicY
  * @param private_key 私钥
- * reuturn 0 成功
+ * reuturn 1 成功
  */
 int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_key);
-    
+
 /**
  * sender rootkey生成
  *
@@ -114,22 +120,55 @@ int akc_chain_key(const unsigned char *root_chain_key, int count,unsigned char *
  */
 int akc_chain_key_next(const unsigned char *chain_key, unsigned char **chain_key_next_out);
     
+/*
+ * 消息头加密key
+ * @param my_idka 我的id私钥
+ * @param their_idkb 对方id公钥
+ * return 1
+ */
+int akc_message_headkey(const unsigned char *my_idka,
+                        const unsigned char *their_idkb,
+                        unsigned char **key_out);
+/*
+ * 消息明文 + 消息ID sm3
+ * 消息特征生成
+ * return 1
+ */
+int akc_message_mf(const unsigned char *mfplain,
+                   size_t mflen,
+                   unsigned char **mf_out);
+/*
+ * 消息HMAC
+ * @param input 密文
+ * @param inlen 输入长度
+ * @param mackey key
+ * @param hmac_out 32位HMAC
+ * return 1
+ */
+int akc_message_HMAC(const unsigned char *input,
+                     size_t inlen,
+                     const unsigned char *mackey,
+                     unsigned char **hmac_out);
 /**
- * chain_key生成mkey 以及 miv
+ * chain_key生成mkey 以及 miv mac
  *
  *
  * @param chain_key
  * @param chain_key_len
- * @param message_idlen 消息id长度
- * @param mkey
- * @param miv
- @ return keylen
+ * @param message_mf_len 消息特征长度
+ * @param mkey 16位
+ * @param miv 16位
+ * @param mac 32位
+ @ return 1 success
  */
 int akc_message_keys(const unsigned char *chain_key,
-                     const unsigned char *message_id,
-                     unsigned long message_idlen,
+                     const unsigned char *message_mf,
+                     size_t message_mf_len,
                      unsigned char **messagekey_out,
-                     unsigned char **miv_out);
+                     unsigned char **miv_out,
+                     unsigned char **mac_out);
+
+    
 
 /**
  * 消息签名
@@ -141,7 +180,7 @@ int akc_message_keys(const unsigned char *chain_key,
  */
 int akc_signature(const unsigned char *my_spka,
                   const unsigned char *datasignature,
-                  unsigned long datasignature_len,
+                  size_t datasignature_len,
                   unsigned char **signature_out);
 /**
  * 消息签名验证
@@ -152,7 +191,7 @@ int akc_signature(const unsigned char *my_spka,
  */
 int akc_verify_signature(const unsigned char *their_spkb,
                          const unsigned char *datasignature,
-                         unsigned long datasignature_len,
+                         size_t datasignature_len,
                          const unsigned char *signature);
     
 /**
@@ -164,8 +203,8 @@ int akc_verify_signature(const unsigned char *their_spkb,
  * @param key
  * @param output 输出 密文
  */
-unsigned long akc_sm4_encrypt(const unsigned char *input,
-                              unsigned long inlen,
+size_t akc_sm4_encrypt(const unsigned char *input,
+                              size_t inlen,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output);
@@ -179,8 +218,8 @@ unsigned long akc_sm4_encrypt(const unsigned char *input,
  * @param key
  * @param output 输出 明文
  */
-unsigned long akc_sm4_decrypt(const unsigned char *input,
-                              unsigned long inlen,
+size_t akc_sm4_decrypt(const unsigned char *input,
+                              size_t inlen,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output);

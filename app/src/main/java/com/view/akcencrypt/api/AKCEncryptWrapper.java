@@ -28,6 +28,23 @@ public class AKCEncryptWrapper {
     }
 
     /*
+    * 测试SM3
+    * 返回 debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732
+    * */
+    public native byte[] NativeSM3ABCTEST();
+
+    /*
+    * SM4 加密测试
+    * 返回 f3f1d0c3 dedcbfd5 6fba1bf0 9f21d44a
+    * */
+    public native byte[] NativeSM4ABCENCRYPTTEST();
+    /*
+     * SM4 解密测试
+     * 返回 616263 /// UTF-8 abc
+     * */
+    public native byte[] NativeSM4ABCDEENCRYPTTEST(byte[]input);
+
+    /*
     *  生成keypair
     *  return 64 + 32 位byte数组 ,前64位公钥，后32位私钥
     * */
@@ -77,13 +94,34 @@ public class AKCEncryptWrapper {
     public native byte[] NativeChainKeyNext(byte[]chain_key);
 
     /*
+    * 消息头加密key
+    * @param my_idka 我的id私钥
+    * @param their_idkb 对方id公钥
+    * return 消息头key 32位
+    */
+    public native byte[] NativeMessageHeadKey(byte[]my_idka,byte[]their_idkb);
+
+    /*
+     * 消息明文 + 消息ID
+     * 消息特征生成
+     * return 消息特征32位
+     */
+    public native byte[] NativeMessageMF(byte[]mf_plain);
+    /*
+     * 消息HMAC
+     * @param input 密文
+     * @param mackey 输入长度
+     * return hmac_out 32位HMAC
+     */
+    public native byte[] NativeMessageHMAC(byte[]input,byte[]mackey);
+    /*
     *  生成key和iv
     * @param chain_key
     * @param message_id  消息id byte数组
-    * return 32位byte数组 前16位key，后16位iv
+    * return  16 + 16 + 32位byte数组 16位key，16位iv ,32位mac
     * */
-    public native byte[] NativeMessageKeyAndIV(byte[]chain_key,
-                                               byte[]message_id);
+    public native byte[] NativeMessageKeyAndIVAndMac(byte[]chain_key,
+                                                byte[]message_id);
 
     /**
      * 消息签名
@@ -147,6 +185,17 @@ public class AKCEncryptWrapper {
     public static void AKCEncryTest() throws UnsupportedEncodingException {
         //测试libakcencrypt.so库
         final AKCEncryptWrapper encryptWrapper = AKCEncryptWrapper.getInstance();
+
+        byte[] testsm3 = encryptWrapper.NativeSM3ABCTEST();
+        Log.d(TAG, "testsm3:\r\n" + encryptWrapper.getHexString(testsm3));
+
+        byte[] sm4EncryptTest = encryptWrapper.NativeSM4ABCENCRYPTTEST();
+        Log.d(TAG, "sm4EncryptTest:\r\n" + encryptWrapper.getHexString(sm4EncryptTest));
+
+        byte[] sm4DeEncryptTest = encryptWrapper.NativeSM4ABCDEENCRYPTTEST(sm4EncryptTest);
+        String sm4DeEncryptTest_utf8String = new String(sm4DeEncryptTest,"utf-8");
+        Log.d(TAG, "sm4DeEncryptTest:\r\n" + encryptWrapper.getHexString(sm4DeEncryptTest));
+        Log.d(TAG, "sm4DeEncryptTest_utf8String:\r\n" + sm4DeEncryptTest_utf8String);
 
         byte[] aliceid = encryptWrapper.NativeGeneratekeyPair();
         byte[] aliceid_public = new byte[64];
@@ -217,48 +266,63 @@ public class AKCEncryptWrapper {
         Log.d(TAG, "bob_recv_chainKey:\r\n" + encryptWrapper.getHexString(bob_recv_chainKey));
 
         String testMessageid = "dfgf-dsgs-dg4";
-        byte messageid[] = testMessageid.getBytes("UTF-8");
-        Log.d(TAG, "messageid len:\r\n" + messageid.length);
-
-        byte[] alice_send_message_key_iv = encryptWrapper.NativeMessageKeyAndIV(alice_send_chainKey,messageid);
-        Log.d(TAG, "alice_send_message_key_iv:\r\n" + alice_send_message_key_iv.length);
-        byte[] alice_send_message_key = new byte[16];
-        byte[] alice_send_message_iv = new byte[16];
-        System.arraycopy(alice_send_message_key_iv, 0, alice_send_message_key,0, 16);
-        System.arraycopy(alice_send_message_key_iv, 16, alice_send_message_iv,0, 16);
-        Log.d(TAG, "alice_send_message_key:\r\n" + encryptWrapper.getHexString(alice_send_message_key));
-        Log.d(TAG, "alice_send_message_iv:\r\n" + encryptWrapper.getHexString(alice_send_message_iv));
-
-        byte[] alice_recv_message_key_iv = encryptWrapper.NativeMessageKeyAndIV(alice_recv_chainKey,messageid);
-        byte[] alice_recv_message_key = new byte[16];
-        byte[] alice_recv_message_iv = new byte[16];
-        System.arraycopy(alice_recv_message_key_iv, 0, alice_recv_message_key,0, 16);
-        System.arraycopy(alice_recv_message_key_iv, 16, alice_recv_message_iv,0, 16);
-        Log.d(TAG, "alice_recv_message_key:\r\n" + encryptWrapper.getHexString(alice_recv_message_key));
-        Log.d(TAG, "alice_recv_message_iv:\r\n" + encryptWrapper.getHexString(alice_recv_message_iv));
-
-        byte[] bob_send_message_key_iv = encryptWrapper.NativeMessageKeyAndIV(bob_send_chainKey,messageid);
-        byte[] bob_send_message_key = new byte[16];
-        byte[] bob_send_message_iv = new byte[16];
-        System.arraycopy(bob_send_message_key_iv, 0, bob_send_message_key,0, 16);
-        System.arraycopy(bob_send_message_key_iv, 16, bob_send_message_iv,0, 16);
-        Log.d(TAG, "bob_send_message_key:\r\n" + encryptWrapper.getHexString(bob_send_message_key));
-        Log.d(TAG, "bob_send_message_iv:\r\n" + encryptWrapper.getHexString(bob_send_message_iv));
-
-        byte[] bob_recv_message_key_iv = encryptWrapper.NativeMessageKeyAndIV(bob_recv_chainKey,messageid);
-        byte[] bob_recv_message_key = new byte[16];
-        byte[] bob_recv_message_iv = new byte[16];
-        System.arraycopy(bob_recv_message_key_iv, 0, bob_recv_message_key,0, 16);
-        System.arraycopy(bob_recv_message_key_iv, 16, bob_recv_message_iv,0, 16);
-        Log.d(TAG, "bob_recv_message_key:\r\n" + encryptWrapper.getHexString(bob_recv_message_key));
-        Log.d(TAG, "bob_recv_message_iv:\r\n" + encryptWrapper.getHexString(bob_recv_message_iv));
-
-
-        Log.d(TAG, "messageid:\r\n " + encryptWrapper.getHexString(messageid) + "orig:\r\n " + new String(messageid,"utf-8"));
-
-
         String messageplain = "中国共产党，简称中共，成立于1921年7月，1949年10月至今为代表工人阶级领导工农联盟和统一战线，在中国大陆实行人民民主专政的中华人民共和国唯一执政党。";
         byte[] messageplainbyte = messageplain.getBytes("UTF-8");
+
+        byte[] messagemfPlain = (testMessageid+messageplain).getBytes("UTF-8");
+        byte[] messageMF = encryptWrapper.NativeMessageMF(messagemfPlain);
+        Log.d(TAG, "messageMF:\r\n" + encryptWrapper.getHexString(messageMF));
+
+
+        byte[] alice_send_message_key_iv_mac = encryptWrapper.NativeMessageKeyAndIVAndMac(alice_send_chainKey,messageMF);
+        Log.d(TAG, "alice_send_message_key_iv_mac:\r\n" + alice_send_message_key_iv_mac.length);
+        byte[] alice_send_message_key = new byte[16];
+        byte[] alice_send_message_iv = new byte[16];
+        byte[] alice_send_message_mac = new byte[32];
+        System.arraycopy(alice_send_message_key_iv_mac, 0, alice_send_message_key,0, 16);
+        System.arraycopy(alice_send_message_key_iv_mac, 16, alice_send_message_iv,0, 16);
+        System.arraycopy(alice_send_message_key_iv_mac, 32, alice_send_message_mac,0, 32);
+        Log.d(TAG, "alice_send_message_key:\r\n" + encryptWrapper.getHexString(alice_send_message_key));
+        Log.d(TAG, "alice_send_message_iv:\r\n" + encryptWrapper.getHexString(alice_send_message_iv));
+        Log.d(TAG, "alice_send_message_mac:\r\n" + encryptWrapper.getHexString(alice_send_message_mac));
+
+        byte[] alice_recv_message_key_iv_mac = encryptWrapper.NativeMessageKeyAndIVAndMac(alice_recv_chainKey,messageMF);
+        byte[] alice_recv_message_key = new byte[16];
+        byte[] alice_recv_message_iv = new byte[16];
+        byte[] alice_recv_message_mac = new byte[32];
+        System.arraycopy(alice_recv_message_key_iv_mac, 0, alice_recv_message_key,0, 16);
+        System.arraycopy(alice_recv_message_key_iv_mac, 16, alice_recv_message_iv,0, 16);
+        System.arraycopy(alice_recv_message_key_iv_mac, 32, alice_recv_message_mac,0, 32);
+        Log.d(TAG, "alice_recv_message_key:\r\n" + encryptWrapper.getHexString(alice_recv_message_key));
+        Log.d(TAG, "alice_recv_message_iv:\r\n" + encryptWrapper.getHexString(alice_recv_message_iv));
+        Log.d(TAG, "alice_recv_message_mac:\r\n" + encryptWrapper.getHexString(alice_recv_message_mac));
+
+        byte[] bob_send_message_key_iv_mac = encryptWrapper.NativeMessageKeyAndIVAndMac(bob_send_chainKey,messageMF);
+        byte[] bob_send_message_key = new byte[16];
+        byte[] bob_send_message_iv = new byte[16];
+        byte[] bob_send_message_mac = new byte[32];
+        System.arraycopy(bob_send_message_key_iv_mac, 0, bob_send_message_key,0, 16);
+        System.arraycopy(bob_send_message_key_iv_mac, 16, bob_send_message_iv,0, 16);
+        System.arraycopy(bob_send_message_key_iv_mac, 32, bob_send_message_mac,0, 32);
+        Log.d(TAG, "bob_send_message_key:\r\n" + encryptWrapper.getHexString(bob_send_message_key));
+        Log.d(TAG, "bob_send_message_iv:\r\n" + encryptWrapper.getHexString(bob_send_message_iv));
+        Log.d(TAG, "bob_send_message_mac:\r\n" + encryptWrapper.getHexString(bob_send_message_mac));
+
+        byte[] bob_recv_message_key_iv_mac = encryptWrapper.NativeMessageKeyAndIVAndMac(bob_recv_chainKey,messageMF);
+        byte[] bob_recv_message_key = new byte[16];
+        byte[] bob_recv_message_iv = new byte[16];
+        byte[] bob_recv_message_mac = new byte[32];
+        System.arraycopy(bob_recv_message_key_iv_mac, 0, bob_recv_message_key,0, 16);
+        System.arraycopy(bob_recv_message_key_iv_mac, 16, bob_recv_message_iv,0, 16);
+        System.arraycopy(bob_recv_message_key_iv_mac, 32, bob_recv_message_mac,0, 32);
+        Log.d(TAG, "bob_recv_message_key:\r\n" + encryptWrapper.getHexString(bob_recv_message_key));
+        Log.d(TAG, "bob_recv_message_iv:\r\n" + encryptWrapper.getHexString(bob_recv_message_iv));
+        Log.d(TAG, "bob_recv_message_mac:\r\n" + encryptWrapper.getHexString(bob_recv_message_mac));
+
+
+
+
+
 
         //test encrypt
         byte alice_send_messageencrypt[] = encryptWrapper.NativeEncryptData(messageplainbyte,messageplainbyte.length,alice_send_message_key,alice_send_message_iv);
@@ -269,6 +333,10 @@ public class AKCEncryptWrapper {
         Log.d(TAG, "alice_send_messagedencrypt:\r\n" + encryptWrapper.getHexString(alice_send_messagedencrypt));
         Log.d(TAG, "bob_recv_messagedencrypt:\r\n" + encryptWrapper.getHexString(bob_recv_messagedencrypt));
 
+        byte[] alicemessageHmac = encryptWrapper.NativeMessageHMAC(alice_send_messageencrypt,alice_send_message_mac);
+        Log.d(TAG, "alicemessageHmac:\r\n" + encryptWrapper.getHexString(alicemessageHmac));
+        byte[] bobmessageHmac = encryptWrapper.NativeMessageHMAC(alice_send_messageencrypt,bob_recv_message_mac);
+        Log.d(TAG, "bobmessageHmac:\r\n" + encryptWrapper.getHexString(bobmessageHmac));
 
         String alice_send_encrypt = new String(alice_send_messageencrypt,"utf-8");
         String alice_send_dencrypt = new String(alice_send_messagedencrypt,"utf-8");
@@ -286,7 +354,6 @@ public class AKCEncryptWrapper {
 
         int ver_signature_bob = encryptWrapper.NativeVerifySignature(bobsign_public,alice_send_messageencrypt,signature);
         Log.d(TAG, "ver_signature_bob:\r\n" + ver_signature_bob);
-
     }
 
 }

@@ -11,6 +11,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM3ABCTEST
+ * Signature: ()[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3ABCTEST
+        (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM4ABCENCRYPTTEST
+ * Signature: ()[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ABCENCRYPTTEST
+        (JNIEnv *, jobject);
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM4ABCDEENCRYPTTEST
+ * Signature: ()[B[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ABCDEENCRYPTTEST
+        (JNIEnv *, jobject,jbyteArray);
+
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeGeneratekeyPair
@@ -53,10 +77,34 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
- * Method:    NativeMessageKeyAndIV
+ * Method:    NativeMessageHeadKey
  * Signature: ([B[B)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageKeyAndIV
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageHeadKey
+  (JNIEnv *, jobject, jbyteArray, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeMessageMF
+ * Signature: ([B)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageMF
+  (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeMessageHMAC
+ * Signature: ([B[B)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageHMAC
+  (JNIEnv *, jobject, jbyteArray, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeMessageKeyAndIVAndMac
+ * Signature: ([B[B)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageKeyAndIVAndMac
   (JNIEnv *, jobject, jbyteArray, jbyteArray);
 
 /*
@@ -70,7 +118,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeVerifySignature
- * Signature: ([B[B[B)[B
+ * Signature: ([B[B[B)I
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature
   (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray);
