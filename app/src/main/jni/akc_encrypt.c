@@ -445,15 +445,15 @@ size_t akc_sm4_encrypt(const unsigned char *input,
     size_t plainInDataLength = inlen;
     size_t paddingLength = AKC_IV_LEN - plainInDataLength % AKC_IV_LEN;
     size_t encryptDataLength = plainInDataLength + paddingLength;
-    unsigned char plainInChar[encryptDataLength];
+    unsigned char *plainInChar = (unsigned char *)malloc((encryptDataLength) * sizeof(unsigned char));
     memcpy(plainInChar, input, plainInDataLength);
     //补位内容为需要补的长度
     memset(plainInChar+plainInDataLength, paddingLength, paddingLength);
 #ifdef AKCENCRYPT_DEBUG
     printf("sm4_encrypt \n plainInDataLength=%lu \n encryptDataLength=%lu \n paddingLength=%lu \n",plainInDataLength,encryptDataLength,paddingLength);
 #endif
-    //输出密文
-    unsigned char cipherOutChar[encryptDataLength];
+    // 输出密文 
+    unsigned char *cipherOutChar = (unsigned char *)malloc(encryptDataLength * sizeof(unsigned char));
     unsigned char iv[AKC_IV_LEN];
     memcpy(iv, miv, AKC_IV_LEN);
     unsigned char sm4Key[AKC_MESSAGE_KEY_LEN];
@@ -468,7 +468,9 @@ size_t akc_sm4_encrypt(const unsigned char *input,
         *output = encryptdata;
     }
     memset(plainInChar, 0, encryptDataLength);
+    free(plainInChar);
     memset(cipherOutChar, 0, encryptDataLength);
+    free(cipherOutChar);
     memset(iv, 0, AKC_IV_LEN);
     memset(sm4Key, 0, AKC_MESSAGE_KEY_LEN);
     return result;
@@ -486,7 +488,7 @@ size_t akc_sm4_decrypt(const unsigned char *input,
     unsigned char sm4Key[AKC_MESSAGE_KEY_LEN];
     memcpy(sm4Key, key, AKC_MESSAGE_KEY_LEN);
     size_t plainWithPaddingLength = inlen;
-    unsigned char plainOutChar[plainWithPaddingLength];
+    unsigned char *plainOutChar = (unsigned char *)malloc(plainWithPaddingLength * sizeof(unsigned char));
     sm4_context ctx;
     sm4_setkey_dec(&ctx,sm4Key);
     sm4_crypt_cbc(&ctx, SM4_DECRYPT, (int)plainWithPaddingLength, iv, (unsigned char *)input, plainOutChar);
@@ -503,6 +505,7 @@ size_t akc_sm4_decrypt(const unsigned char *input,
         *output = decryptdata;
     }
     memset(plainOutChar, 0, plainWithPaddingLength);
+    free(plainOutChar);
     memset(iv, 0, AKC_IV_LEN);
     memset(sm4Key, 0, AKC_MESSAGE_KEY_LEN);
     return result;
