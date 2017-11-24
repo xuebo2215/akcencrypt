@@ -113,7 +113,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
  * Signature: ([B[B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature
-  (JNIEnv *, jobject, jbyteArray, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
@@ -121,7 +121,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
  * Signature: ([B[B[B)I
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature
-  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper

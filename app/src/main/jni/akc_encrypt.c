@@ -393,8 +393,7 @@ int akc_message_keys(const unsigned char *chain_key,
     return 1;
 }
 
-int akc_signature(const unsigned char *my_spka,
-                  const unsigned char *datasignature,
+int akc_signature(const unsigned char *datasignature,
                   size_t datasignature_len,
                   unsigned char **signature_out)
 {
@@ -405,33 +404,59 @@ int akc_signature(const unsigned char *my_spka,
     unsigned char r[AKC_KEY_LEN];
     unsigned char s[AKC_KEY_LEN];
     unsigned char id_hash[AKC_KEY_LEN] = {0};
+    
+    unsigned char *public_key;
+    unsigned char *private_key;
+    akc_generate_key_pair(&public_key, &private_key);
+
     sm3((unsigned char *)datasignature,(int)datasignature_len, id_hash);
-    result = ecdsa_sign(r, s, (unsigned char*)my_spka, randomkey, id_hash);
+    result = ecdsa_sign(r, s, private_key, randomkey, id_hash);
     if (result == 1) {
-        signature = malloc(AKC_KEY_LEN*2);
+        signature = malloc(AKC_KEY_LEN+AKC_KEY_LEN+AKC_PUBLIC_KEY_LEN);
         memcpy(signature, r , AKC_KEY_LEN);
         memcpy(signature + AKC_KEY_LEN, s , AKC_KEY_LEN);
+        memcpy(signature + AKC_KEY_LEN + AKC_KEY_LEN, public_key , AKC_PUBLIC_KEY_LEN);
         *signature_out = signature;
     }
+    
+    memset(randomkey, 0, AKC_KEY_LEN);
+    memset(r, 0, AKC_KEY_LEN);
+    memset(s, 0, AKC_KEY_LEN);
+    memset(id_hash, 0, AKC_KEY_LEN);
+    if (public_key) free(public_key);
+    if (private_key) free(private_key);
+    
     return result;
 }
 
-int akc_verify_signature(const unsigned char *their_spkb,
-                         const unsigned char *datasignature,
+int akc_verify_signature(const unsigned char *datasignature,
                          size_t datasignature_len,
                          const unsigned char *signature)
 {
     unsigned char id_hash[AKC_KEY_LEN] = {0};
     sm3((unsigned char *)datasignature,(int)datasignature_len, id_hash);
-    EccPoint p_publicKey;
-    //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
-    memcpy(p_publicKey.x, their_spkb, AKC_KEY_LEN);
-    memcpy(p_publicKey.y, their_spkb+AKC_KEY_LEN, AKC_KEY_LEN);
+    
     unsigned char r[AKC_KEY_LEN];
     unsigned char s[AKC_KEY_LEN];
+    unsigned char public_key[AKC_PUBLIC_KEY_LEN];
     memcpy(r, signature, AKC_KEY_LEN);
     memcpy(s, signature+AKC_KEY_LEN, AKC_KEY_LEN);
-    return ecdsa_verify(&p_publicKey, id_hash, r, s);
+    memcpy(public_key, signature+AKC_KEY_LEN+AKC_KEY_LEN, AKC_PUBLIC_KEY_LEN);
+    
+    EccPoint p_publicKey;
+    //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
+    memcpy(p_publicKey.x, (unsigned char *)public_key, AKC_KEY_LEN);
+    memcpy(p_publicKey.y, (unsigned char *)public_key+AKC_KEY_LEN, AKC_KEY_LEN);
+    
+    int res =  ecdsa_verify(&p_publicKey, id_hash, r, s);
+    
+    memset(id_hash, 0, AKC_KEY_LEN);
+    memset(r, 0, AKC_KEY_LEN);
+    memset(s, 0, AKC_KEY_LEN);
+    memset(public_key, 0, AKC_PUBLIC_KEY_LEN);
+    memset(&p_publicKey, 0, sizeof(EccPoint));
+
+    return res;
 }
 
 size_t akc_sm4_encrypt(const unsigned char *input,

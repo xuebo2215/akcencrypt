@@ -125,23 +125,19 @@ public class AKCEncryptWrapper {
 
     /**
      * 消息签名
-     * @param my_spka 我的签名私钥
      * @param datasignature 待签名数据
-     * @ Returns signature_out
+     * @ Returns signature_out 128 位签名
      */
-    public native byte[] NativeSignature(byte[]my_spka,
-                                         byte[]datasignature);
+    public native byte[] NativeSignature(byte[]datasignature);
 
     /**
      * 消息签名验证
-     * @param their_spkb 签名公钥
      * @param datasignature 待验签数据
      * @param signature 签名
      *  @ Returns 1 if the signature is valid, 0 if it is invalid.
      */
-    public native int NativeVerifySignature(byte[]their_spkb,
-                                               byte[]datasignature,
-                                               byte[]signature);
+    public native int NativeVerifySignature(byte[]datasignature,
+                                            byte[]signature);
 
     /*
     *  加密
@@ -346,14 +342,17 @@ public class AKCEncryptWrapper {
         Log.d(TAG, "alice_send_dencrypt:\r\n" + alice_send_dencrypt);
         Log.d(TAG, "bob_recv_dencrypt:\r\n" + bob_recv_dencrypt);
 
-        byte signature[] = encryptWrapper.NativeSignature(alicesign_private,alice_send_messageencrypt);
+        byte signature[] = encryptWrapper.NativeSignature(alice_send_messageencrypt);
         Log.d(TAG, "signature:\r\n" + encryptWrapper.getHexString(signature));
 
-        int ver_signature_alice = encryptWrapper.NativeVerifySignature(alicesign_public,alice_send_messageencrypt,signature);
+        byte signature2[] = encryptWrapper.NativeSignature(alice_send_messageencrypt);
+        Log.d(TAG, "signature2:\r\n" + encryptWrapper.getHexString(signature2));
+
+        int ver_signature_alice = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature);
         Log.d(TAG, "ver_signature_alice:\r\n" + ver_signature_alice);
 
-        int ver_signature_bob = encryptWrapper.NativeVerifySignature(bobsign_public,alice_send_messageencrypt,signature);
-        Log.d(TAG, "ver_signature_bob:\r\n" + ver_signature_bob);
+        int ver_signature_alice2 = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature2);
+        Log.d(TAG, "ver_signature_alice2:\r\n" + ver_signature_alice2);
     }
 
 }
