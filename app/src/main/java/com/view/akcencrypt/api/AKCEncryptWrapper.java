@@ -329,6 +329,20 @@ public class AKCEncryptWrapper {
         Log.d(TAG, "alice_send_messagedencrypt:\r\n" + encryptWrapper.getHexString(alice_send_messagedencrypt));
         Log.d(TAG, "bob_recv_messagedencrypt:\r\n" + encryptWrapper.getHexString(bob_recv_messagedencrypt));
 
+
+        byte[] error_key_iv_mac = encryptWrapper.NativeMessageKeyAndIVAndMac(bob_recv_root_key,messageMF);
+        byte[] error_key = new byte[16];
+        byte[] error_iv = new byte[16];
+        byte[] error_mac = new byte[32];
+        System.arraycopy(error_key_iv_mac, 0, error_key,0, 16);
+        System.arraycopy(error_key_iv_mac, 16, error_iv,0, 16);
+        System.arraycopy(error_key_iv_mac, 32, error_mac,0, 32);
+        byte error_key_test[] = encryptWrapper.NativeDecryptData(alice_send_messageencrypt,alice_send_messageencrypt.length,error_key,error_iv);
+        Log.d(TAG, "error_key_test:\r\n" + encryptWrapper.getHexString(error_key_test));
+        String error_key_test_dencrypt = new String(error_key_test,"utf-8");
+        Log.d(TAG, "error_key_test_dencrypt:\r\n" + error_key_test_dencrypt);
+
+
         byte[] alicemessageHmac = encryptWrapper.NativeMessageHMAC(alice_send_messageencrypt,alice_send_message_mac);
         Log.d(TAG, "alicemessageHmac:\r\n" + encryptWrapper.getHexString(alicemessageHmac));
         byte[] bobmessageHmac = encryptWrapper.NativeMessageHMAC(alice_send_messageencrypt,bob_recv_message_mac);

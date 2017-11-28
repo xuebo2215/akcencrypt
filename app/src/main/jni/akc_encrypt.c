@@ -508,6 +508,9 @@ size_t akc_sm4_decrypt(const unsigned char *input,
                               unsigned char **output)
 {
     size_t result = 0;
+    if (inlen<=0) {
+        return 0;
+    }
     unsigned char iv[AKC_IV_LEN];
     memcpy(iv, miv, AKC_IV_LEN);
     unsigned char sm4Key[AKC_MESSAGE_KEY_LEN];
@@ -517,10 +520,9 @@ size_t akc_sm4_decrypt(const unsigned char *input,
     sm4_context ctx;
     sm4_setkey_dec(&ctx,sm4Key);
     sm4_crypt_cbc(&ctx, SM4_DECRYPT, (int)plainWithPaddingLength, iv, (unsigned char *)input, plainOutChar);
-    result = plainWithPaddingLength;
-    if (result>0) {
-        //获取补位长度,移除补位
-        size_t paddingLength  = plainOutChar[plainWithPaddingLength-1];
+    //padding length
+    size_t paddingLength  = plainOutChar[plainWithPaddingLength-1];
+    if (plainWithPaddingLength > paddingLength) {
         result = plainWithPaddingLength-paddingLength;
 #ifdef AKCENCRYPT_DEBUG
         printf("sm4_decrypt \n plainWithPaddingLength=%lu \n paddingLength=%lu \n plainWithOutPaddingLength=%lu \n",plainWithPaddingLength,paddingLength,result);
@@ -528,6 +530,8 @@ size_t akc_sm4_decrypt(const unsigned char *input,
         unsigned char * decryptdata = malloc(result);
         memcpy(decryptdata, plainOutChar , result);
         *output = decryptdata;
+    }else{
+        result = 0;
     }
     memset(plainOutChar, 0, plainWithPaddingLength);
     free(plainOutChar);

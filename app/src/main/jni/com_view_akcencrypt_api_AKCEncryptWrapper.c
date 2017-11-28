@@ -408,6 +408,11 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEncryptData(JNIEnv* env, jo
 																 jbyteArray key,
 																 jbyteArray iv){
 	size_t plainLen  = inlen;
+	size_t key_Len  = (*env)->GetArrayLength(env, key);
+	size_t iv_Len  = (*env)->GetArrayLength(env, iv);
+	if (key_Len < 16 || iv_Len < 16 || inlen <= 0){
+		return NULL;
+	}
 	const unsigned char *buf_plain = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
 	const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
 	const unsigned char *buf_iv = (unsigned char*)((*env)->GetByteArrayElements(env, iv, NULL));
@@ -437,6 +442,13 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDecryptData(JNIEnv* env, jo
 																 jlong inlen,
 																 jbyteArray key,
 																 jbyteArray iv){
+
+	size_t key_Len  = (*env)->GetArrayLength(env, key);
+	size_t iv_Len  = (*env)->GetArrayLength(env, iv);
+	if (key_Len < 16 || iv_Len < 16 || inlen <= 0){
+		return NULL;
+	}
+
 	size_t encryptLen  = inlen;
 	const unsigned char *buf_encrypt = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
 	const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
@@ -449,12 +461,11 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDecryptData(JNIEnv* env, jo
 	(*env)->ReleaseByteArrayElements(env, key, (jbyte*)buf_key, 0);
 	(*env)->ReleaseByteArrayElements(env, iv, (jbyte*)buf_iv, 0);
 
-	jbyteArray jarray = (*env)->NewByteArray(env, decrypt_out_len);
-	(*env)->SetByteArrayRegion(env, jarray, 0, decrypt_out_len, (jbyte *)decrypt_out);
-
-	if (jarray == NULL) {
-		return NULL;
+	if (decrypt_out_len > 0 && decrypt_out != NULL){
+		jbyteArray jarray =  (*env)->NewByteArray(env, decrypt_out_len);
+		(*env)->SetByteArrayRegion(env, jarray, 0, decrypt_out_len, (jbyte *)decrypt_out);
+		if (decrypt_out) free(decrypt_out);
+		return jarray;
 	}
-
-	return jarray;
+	return NULL;
 }
