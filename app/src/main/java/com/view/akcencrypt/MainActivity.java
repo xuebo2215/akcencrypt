@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import com.view.akcencrypt.api.AKCEncryptWrapper;
 import android.util.Log;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             AKCEncryptWrapper.AKCEncryTest();
         } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

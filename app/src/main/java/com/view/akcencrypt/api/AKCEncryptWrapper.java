@@ -2,7 +2,11 @@ package com.view.akcencrypt.api;
 
 import android.util.Log;
 
+import com.view.akcencrypt.Base64;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
 
 /**
  * Created by xuebo on 2017/11/7.
@@ -178,7 +182,7 @@ public class AKCEncryptWrapper {
         return result;
     }
 
-    public static void AKCEncryTest() throws UnsupportedEncodingException {
+    public static void AKCEncryTest() throws IOException {
         //测试libakcencrypt.so库
         final AKCEncryptWrapper encryptWrapper = AKCEncryptWrapper.getInstance();
 
@@ -367,6 +371,14 @@ public class AKCEncryptWrapper {
 
         int ver_signature_alice2 = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature2);
         Log.d(TAG, "ver_signature_alice2:\r\n" + ver_signature_alice2);
+
+        byte[] test_verify_signature = Base64.decode("LBlL6bL+aqtWwIx2pxoDkMPzfMemngUdDzFowTVyZH8slgyhsQ7usmHjuxbrCzkT8xRbkFsdUXIPpb3x1b+Fj20Vk6Qd8gwOxKCJJii1DBkwJOt2FpRAzJxQjqoR+DnIKQ0IsCHAAs3fJbcvsxfCNoALALbE/qrShp4FBOgRXnc=");
+        byte[] test_encrypt = Base64.decode("o5IjUJaFWnhjA5IouO4ULbx/3vHiPY6qMCfueJ2i6/8=");
+        Log.d(TAG, "test_verify_signature:\r\n" + encryptWrapper.getHexString(test_verify_signature));
+        Log.d(TAG, "test_encrypt:\r\n" + encryptWrapper.getHexString(test_encrypt));
+        int test_ver_signature = encryptWrapper.NativeVerifySignature(test_encrypt,test_verify_signature);
+        Log.d(TAG, "test_ver_signature:\r\n" + test_ver_signature);
+
     }
 
 }

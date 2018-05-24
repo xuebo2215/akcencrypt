@@ -7,6 +7,24 @@
 //
 
 #include "akc_encrypt.h"
+#include <string.h>
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include "sm3.h"
+#include "sm4.h"
+#include "sm2.h"
+
+void printBytes(unsigned char* title, unsigned char* bytes, int len)
+{
+    printf("\n========== %s ==========\n",title);
+    unsigned i;
+    for(i=0; i<len; i++)
+    {
+        printf("%02x ", (unsigned)bytes[i]);
+    }
+    printf("\n====================\n");
+}
 
 int genRandomString(unsigned char* ouput,int length)
 {
@@ -42,6 +60,7 @@ unsigned char * sm3ABCTEST()
     memcpy(testsm3, test , AKC_KEY_LEN);
     return testsm3;
 }
+
 size_t sm4ABC_ENCRYPT_TEST(unsigned char **output)
 {
     const unsigned char key[AKC_MESSAGE_KEY_LEN] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
@@ -399,8 +418,10 @@ int akc_signature(const unsigned char *datasignature,
 {
     int result = 0;
     unsigned char *signature = 0;
+    
     unsigned char randomkey[AKC_KEY_LEN];
     result = genRandomString(randomkey,AKC_KEY_LEN);
+    
     unsigned char r[AKC_KEY_LEN];
     unsigned char s[AKC_KEY_LEN];
     unsigned char id_hash[AKC_KEY_LEN] = {0};
@@ -538,4 +559,17 @@ size_t akc_sm4_decrypt(const unsigned char *input,
     memset(iv, 0, AKC_IV_LEN);
     memset(sm4Key, 0, AKC_MESSAGE_KEY_LEN);
     return result;
+}
+
+
+size_t akc_sm3_data(const unsigned char *input,
+                    size_t inlen,
+                    unsigned char **output)
+{
+    unsigned char sm3data[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)input,(int)inlen, sm3data);
+    unsigned char * sm3 = malloc(AKC_KEY_LEN);
+    memcpy(sm3, sm3data , AKC_KEY_LEN);
+    *output = sm3;
+    return AKC_KEY_LEN;
 }

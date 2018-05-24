@@ -1,13 +1,9 @@
 /*
- * SM3 Hash alogrith 
- * thanks to Xyssl
- * author:goldboar
- * email:goldboar@163.com
- * 2011-10-26
+ * SM3 Hash
  */
 
 //Testing data from SM3 Standards
-//http://www.oscca.gov.cn/News/201012/News_1199.htm 
+//http://www.oscca.gov.cn/ 
 // Sample 1
 // Input:"abc"  
 // Output:66c7f0f4 62eeedd9 d1f2d46b dc10e4e2 4167c487 5cf2f7a2 297da02b 8f4ba8e0
@@ -15,6 +11,7 @@
 // Sample 2 
 // Input:"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
 // Outpuf:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
+
 #include "sm3.h"
 #include <string.h>
 #include <stdio.h>

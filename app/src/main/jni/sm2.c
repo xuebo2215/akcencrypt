@@ -430,6 +430,11 @@ static void vli_modInv(uint8_t *p_result, uint8_t *p_input, uint8_t *p_mod)
     vli_set(a, p_input);
     vli_set(b, p_mod);
     vli_clear(u);
+    if(vli_isZero(p_input))
+    { /* p_input must not be 0. */
+        vli_set(p_result, u);
+        return;
+    }
     u[0] = 1;
     vli_clear(v);
 
