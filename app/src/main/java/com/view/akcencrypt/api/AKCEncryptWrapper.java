@@ -1,7 +1,5 @@
 package com.view.akcencrypt.api;
 
-import android.util.Log;
-
 /**
  * Created by xuebo on 2017/11/7.
  */
@@ -14,7 +12,12 @@ public class AKCEncryptWrapper {
         System.loadLibrary("akcencrypt");
     }
 
-    private static AKCEncryptWrapper instance = null;
+    private static AKCEncryptWrapper instance;
+
+    static {
+        instance = null;
+    }
+
     private AKCEncryptWrapper()
     {
         super();
@@ -161,18 +164,5 @@ public class AKCEncryptWrapper {
                                            long inlen,
                                            byte[]key,
                                            byte[]miv);
-    /*
-    * getHexString
-    * */
-    public static String getHexString(byte[] b) {
-        if (b == null) {
-            return null;
-        }
 
-        String result = "";
-        for (int i = 0; i < b.length; i++) {
-            result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
-        }
-        return result;
-    }
 }
