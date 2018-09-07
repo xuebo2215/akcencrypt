@@ -1,9 +1,12 @@
 package com.view.akcencrypt;
 
+import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 import com.view.akcencrypt.api.AKCEncryptWrapper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -28,20 +31,60 @@ public class AKCEncryptTest {
         return result;
     }
 
+    public static File createNewFile(File file) {
+
+        try {
+
+            if (file.exists()) {
+                return file;
+            }
+
+            File dir = file.getParentFile();
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "", e);
+            return null;
+        }
+        return file;
+    }
+
     public  static void AKCEncryTest() throws UnsupportedEncodingException {
         //测试libakcencrypt.so库
         final AKCEncryptWrapper encryptWrapper = AKCEncryptWrapper.getInstance();
 
-        byte[] testsm3 = encryptWrapper.NativeSM3ABCTEST();
-        Log.d(TAG, "testsm3:\r\n" + AKCEncryptTest.getHexString(testsm3));
+        int testsm3 = encryptWrapper.NativeSM3ABCTEST();
+        Log.d(TAG, "testsm3:\r\n" + testsm3);
 
-        byte[] sm4EncryptTest = encryptWrapper.NativeSM4ABCENCRYPTTEST();
-        Log.d(TAG, "sm4EncryptTest:\r\n" + AKCEncryptTest.getHexString(sm4EncryptTest));
+        int sm4EncryptTest = encryptWrapper.NativeSM4ENCRYPTTEST();
+        Log.d(TAG, "sm4EncryptTest:\r\n" + sm4EncryptTest);
 
-        byte[] sm4DeEncryptTest = encryptWrapper.NativeSM4ABCDEENCRYPTTEST(sm4EncryptTest);
-        String sm4DeEncryptTest_utf8String = new String(sm4DeEncryptTest,"utf-8");
-        Log.d(TAG, "sm4DeEncryptTest:\r\n" + AKCEncryptTest.getHexString(sm4DeEncryptTest));
-        Log.d(TAG, "sm4DeEncryptTest_utf8String:\r\n" + sm4DeEncryptTest_utf8String);
+        int sm2ECDHTest = encryptWrapper.NativeSM2ECDHTEST();
+        Log.d(TAG, "sm2ECDHTest:\r\n" + sm2ECDHTest);
+
+        int SM2SignatureTest = encryptWrapper.NativeSM2SignatureTEST();
+        Log.d(TAG, "SM2SignatureTest:\r\n" + SM2SignatureTest);
+
+
+        File randomTestFile =  createNewFile(new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Android/data/"+"com.view.akcencrypt.test"+"/randomtest.txt"));
+        if (randomTestFile.exists())
+        {
+            Log.d(TAG, "randomTestFile exists\r\n" );
+        }else{
+            Log.d(TAG, "randomTestFile not exists\r\n" );
+        }
+
+        String filepath =  randomTestFile.getAbsolutePath();
+        Log.d(TAG, "filepath:\r\n" + filepath);
+        byte[] filepathbyte = filepath.getBytes("UTF-8");
+        int randomTest = encryptWrapper.NativeRandomTEST(filepathbyte);
+        Log.d(TAG, "randomTest:\r\n" + randomTest);
+
+
 
         byte[] aliceid = encryptWrapper.NativeGeneratekeyPair();
         byte[] aliceid_public = new byte[64];
@@ -237,6 +280,22 @@ public class AKCEncryptTest {
         Log.d(TAG, "test_encrypt:\r\n" + AKCEncryptTest.getHexString(test_encrypt));
         int test_ver_signature = encryptWrapper.NativeVerifySignature(test_encrypt,test_verify_signature);
         Log.d(TAG, "test_ver_signature:\r\n" + test_ver_signature);
+
+
+
+
+        byte[] publickKeyEncrypTest = encryptWrapper.NativeGeneratekeyPair();
+        byte[] publickKeyEncrypTest_public = new byte[64];
+        byte[] publickKeyEncrypTest_private = new byte[32];
+        System.arraycopy(publickKeyEncrypTest, 0, publickKeyEncrypTest_public,0, 64);
+        System.arraycopy(publickKeyEncrypTest, 64, publickKeyEncrypTest_private,0, 32);
+
+        String passcode = "passcode_test_0909";
+        byte[] passcodebyte = passcode.getBytes("UTF-8");
+        byte passcodeEncrybyte[] = encryptWrapper.NativeEncryptWithPublicKey(passcodebyte,passcodebyte.length,publickKeyEncrypTest_public);
+        byte passcodeDecrypt[] =  encryptWrapper.NativeDecryptWithPrivateKey(passcodeEncrybyte,passcodeEncrybyte.length,publickKeyEncrypTest_private);
+        String passcodeDecryptString = new String(passcodeDecrypt,"utf-8");
+        Log.d(TAG, "passcodeDecryptString:\r\n" + passcodeDecryptString);
 
     }
 }

@@ -7,13 +7,41 @@
 //
 
 #include "akc_encrypt.h"
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
+#include "sm2.h"
 #include "sm3.h"
 #include "sm4.h"
-#include "sm2.h"
+#include "consts.h"
+#include "rand_tests.h"
+#include "SFMT.h"
+
+
+static int byte_cmp(unsigned char *p_left, unsigned char *p_right, int len)
+{
+    int i;
+    for(i = len-1; i >= 0; --i)
+    {
+        if(p_left[i] > p_right[i])
+        {
+            return 1;
+        }
+        else if(p_left[i] < p_right[i])
+        {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int byte_add(unsigned char *p,int len)
+{
+    int sum=0;
+    int i;
+    for(i = len-1; i >= 0; --i)
+    {
+        sum+=p[i];
+    }
+    return sum;
+}
 
 void printBytes(unsigned char* title, unsigned char* bytes, int len)
 {
@@ -21,59 +49,302 @@ void printBytes(unsigned char* title, unsigned char* bytes, int len)
     unsigned i;
     for(i=0; i<len; i++)
     {
-        printf("%02x ", (unsigned)bytes[i]);
+        printf("0x%02x ", (unsigned)bytes[i]);
+        if (i!=len-1) {
+            printf(",");
+        }
     }
     printf("\n====================\n");
 }
 
-int genRandomString(unsigned char* ouput,int length)
+
+
+int sm3ABCTEST()
 {
-    int flag, i;
-    srand( (unsigned)time( NULL ) + rand());
-    for (i = 0; i < length; i++)
-    {
-        flag = rand() % 3;
-        switch (flag)
-        {
-            case 0:
-                ouput[i] = 'A' + rand() % 26;
-                break;
-            case 1:
-                ouput[i] = 'a' + rand() % 26;
-                break;
-            case 2:
-                ouput[i] = '0' + rand() % 10;
-                break;
-            default:
-                ouput[i] = 'x';
-                break;
+    int res = -1;
+
+    const unsigned char sm3_1[32] = {0x62, 0x34, 0x76 ,0xac ,0x18 ,0xf6 ,0x5a ,0x29 ,0x09 ,0xe4 ,0x3c ,0x7f ,0xec ,0x61 ,0xb4 ,0x9c ,0x7e ,0x76 ,0x4a ,0x91 ,0xa1 ,0x8c ,0xcb ,0x82 ,0xf1 ,0x91 ,0x7a ,0x29 ,0xc8 ,0x6c ,0x5e ,0x88};
+    
+    const unsigned char sm3_2[32] = {0xaf ,0xe4 ,0xcc ,0xac ,0x5a ,0xb7 ,0xd5 ,0x2b ,0xca ,0xe3 ,0x63 ,0x73 ,0x67 ,0x62 ,0x15 ,0x36 ,0x8b ,0xaf ,0x52 ,0xd3 ,0x90 ,0x5e ,0x1f ,0xec ,0xbe ,0x36 ,0x9c ,0xc1 ,0x20 ,0xe9 ,0x76 ,0x28};
+    
+    const unsigned char sm3_3[32] = {0x45 ,0x45 ,0x72 ,0xe3 ,0xd1 ,0x52 ,0xbb ,0x8c ,0x3e ,0xf9 ,0x88 ,0x1c ,0xd3 ,0x8d ,0x95 ,0x1d ,0x59 ,0x4c ,0xdc ,0xc3 ,0xe3 ,0xb0 ,0x82 ,0x72 ,0x99 ,0x65 ,0x61 ,0x17 ,0x65 ,0xc9 ,0xd9 ,0xb5};
+    
+    const unsigned char sm3_4[32] = {0x97 ,0x95 ,0x13 ,0xfd ,0x5e ,0x35 ,0xc3 ,0x81 ,0x8c ,0x2b ,0x21 ,0xc2 ,0x75 ,0x6b ,0xcf ,0x03 ,0x7b ,0xca ,0x34 ,0x15 ,0xe9 ,0x8c ,0x5d ,0xdb ,0xf2 ,0x8d ,0x2a ,0x4e ,0x1b ,0x99 ,0x5c ,0x6f};
+
+    for (int i = 0; i<4; i++) {
+        unsigned char test[AKC_KEY_LEN] = {0};
+        if (i==0) {
+            sm3((unsigned char*)"a",1, test);
         }
+        else if (i==1){
+            sm3((unsigned char*)"abcde",5, test);
+        }
+        else if (i==2){
+            sm3((unsigned char*)"abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdef",61, test);
+        }
+        else if (i==3){
+            sm3((unsigned char*)"abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabc",128, test);
+        }
+        unsigned char *testsm3 = malloc(32);
+        memcpy(testsm3, test , AKC_KEY_LEN);
+        if (i==0) {
+            res = byte_cmp(testsm3, (unsigned char*)sm3_1, 32);
+        }
+        else if (i==1){
+            res = byte_cmp(testsm3, (unsigned char*)sm3_2, 32);
+        }
+        else if (i==2){
+            res = byte_cmp(testsm3, (unsigned char*)sm3_3, 32);
+        }
+        else if (i==3){
+            res = byte_cmp(testsm3, (unsigned char*)sm3_4, 32);
+        }
+        memset(test, 0, AKC_KEY_LEN);
+        free(testsm3);
+        
+        if (res!=0) {
+            printf("\n sm3ABCTEST FAIL");
+            break;
+        }
+    }
+    return res;
+}
+
+int sm4_ENCRYPT_TEST()
+{
+    int res = 0;
+    const unsigned char sm4[16] = {0xbe ,0x70, 0x7f, 0x3b, 0x05, 0xa9, 0xcc, 0x84, 0xad, 0xaf, 0x75, 0xb3, 0x07, 0x45, 0x8e, 0x7c };
+    unsigned char *output = 0;
+    const unsigned char key[16] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
+    const unsigned char iv[16] = {0x32, 0x5E, 0x22, 0x47, 0x58, 0xB0, 0x7C, 0x10, 0x66, 0xBB, 0xC1, 0x5A, 0xC5, 0x46, 0x89, 0xED};
+    
+    akc_sm4_encrypt((unsigned char*)"ENCRYPTTEST", 11, key, iv, &output);
+    
+    if (byte_cmp(output, (unsigned char*)sm4, 16)!=0) {
+        printf("\n sm4_ENCRYPT_TEST FAIL");
+        res =  -1;
+    }
+    if (output) free(output);
+    return res;
+}
+
+
+
+int sm2signature_TEST()
+{
+    const unsigned char data[8] = {0x47, 0xd8, 0x3a, 0x47, 0x3d, 0x04, 0xf9, 0xa9};
+    unsigned char *signature_out;
+    akc_signature(data, 8, &signature_out);
+    int signatureVerfyRes = akc_verify_signature(data, 8, signature_out);
+    if (signatureVerfyRes!=1) {
+        printf("\n akc_signature test fail \n");
+        return -1;
+    }
+    /*
+     ========== public_key ==========
+     0x54 ,0xad ,0xaf ,0x16 ,0x19 ,0x86 ,0xeb ,0x9f ,0x2b ,0xf0 ,0x26 ,0xac ,0xba ,0x30 ,0xc6 ,0x1d ,0x39 ,0xf2 ,0x08 ,0x88 ,0xee ,0x43 ,0xad ,0x9c ,0xab ,0x91 ,0x99 ,0x6f ,0x61 ,0x70 ,0x74 ,0xd2 ,0x54 ,0xbe ,0xa1 ,0xa3 ,0xf5 ,0x48 ,0x6b ,0x39 ,0x45 ,0x21 ,0x49 ,0x5d ,0xbe ,0x4e ,0x81 ,0x7c ,0x9e ,0x2c ,0x5a ,0x51 ,0xc8 ,0x6b ,0xa1 ,0x61 ,0x79 ,0xc2 ,0x68 ,0x3b ,0xb0 ,0x1e ,0x89 ,0xa9
+     ====================
+     
+     ========== private_key ==========
+     0x7d ,0xb9 ,0x98 ,0x97 ,0x97 ,0x20 ,0x08 ,0x37 ,0xfd ,0xac ,0xf0 ,0xd6 ,0xfb ,0xeb ,0x27 ,0xa3 ,0xb0 ,0x2d ,0xc5 ,0x40 ,0x80 ,0x25 ,0xf0 ,0x9b ,0x32 ,0x25 ,0xb2 ,0xda ,0x86 ,0x4c ,0x98 ,0xf9
+     ====================
+     
+     ========== signature_out ==========
+     0x1e ,0x4f ,0x2e ,0xe0 ,0x00 ,0x2c ,0x89 ,0x35 ,0x69 ,0xd7 ,0x47 ,0x1c ,0xe7 ,0xf7 ,0xf0 ,0xe5 ,0x53 ,0xb7 ,0xa4 ,0x5b ,0xf0 ,0xe1 ,0x58 ,0x57 ,0x07 ,0xf0 ,0x70 ,0xaf ,0x11 ,0xf5 ,0x22 ,0x38 ,0x90 ,0xe7 ,0xa8 ,0x29 ,0xe9 ,0xce ,0x31 ,0x64 ,0xef ,0xb5 ,0x6b ,0x0b ,0x59 ,0xdf ,0xe5 ,0x22 ,0xfd ,0x4d ,0xa7 ,0x2c ,0x26 ,0x9e ,0x33 ,0xbe ,0x50 ,0xde ,0xe2 ,0xe1 ,0x57 ,0xa0 ,0x9d ,0xde ,0x54 ,0xad ,0xaf ,0x16 ,0x19 ,0x86 ,0xeb ,0x9f ,0x2b ,0xf0 ,0x26 ,0xac ,0xba ,0x30 ,0xc6 ,0x1d ,0x39 ,0xf2 ,0x08 ,0x88 ,0xee ,0x43 ,0xad ,0x9c ,0xab ,0x91 ,0x99 ,0x6f ,0x61 ,0x70 ,0x74 ,0xd2 ,0x54 ,0xbe ,0xa1 ,0xa3 ,0xf5 ,0x48 ,0x6b ,0x39 ,0x45 ,0x21 ,0x49 ,0x5d ,0xbe ,0x4e ,0x81 ,0x7c ,0x9e ,0x2c ,0x5a ,0x51 ,0xc8 ,0x6b ,0xa1 ,0x61 ,0x79 ,0xc2 ,0x68 ,0x3b ,0xb0 ,0x1e ,0x89 ,0xa9
+     ====================
+
+     */
+    
+    /*
+     0x1e ,0x4f ,0x2e ,0xe0 ,0x00 ,0x2c ,0x89 ,0x35 ,
+     0x69 ,0xd7 ,0x47 ,0x1c ,0xe7 ,0xf7 ,0xf0 ,0xe5 ,
+     0x53 ,0xb7 ,0xa4 ,0x5b ,0xf0 ,0xe1 ,0x58 ,0x57 ,
+     0x07 ,0xf0 ,0x70 ,0xaf ,0x11 ,0xf5 ,0x22 ,0x38 ,
+     0x90 ,0xe7 ,0xa8 ,0x29 ,0xe9 ,0xce ,0x31 ,0x64 ,
+     0xef ,0xb5 ,0x6b ,0x0b ,0x59 ,0xdf ,0xe5 ,0x22 ,
+     0xfd ,0x4d ,0xa7 ,0x2c ,0x26 ,0x9e ,0x33 ,0xbe ,
+     0x50 ,0xde ,0xe2 ,0xe1 ,0x57 ,0xa0 ,0x9d ,0xde ,
+     */
+    unsigned char id_hash[AKC_KEY_LEN] = {0};
+    sm3((unsigned char *)data,8, id_hash);
+    
+    unsigned char r[AKC_KEY_LEN] = {0x1e ,0x4f ,0x2e ,0xe0 ,0x00 ,0x2c ,0x89 ,0x35 ,
+        0x69 ,0xd7 ,0x47 ,0x1c ,0xe7 ,0xf7 ,0xf0 ,0xe5 ,
+        0x53 ,0xb7 ,0xa4 ,0x5b ,0xf0 ,0xe1 ,0x58 ,0x57 ,
+        0x07 ,0xf0 ,0x70 ,0xaf ,0x11 ,0xf5 ,0x22 ,0x38};
+    unsigned char s[AKC_KEY_LEN] = {0x90 ,0xe7 ,0xa8 ,0x29 ,0xe9 ,0xce ,0x31 ,0x64 ,
+        0xef ,0xb5 ,0x6b ,0x0b ,0x59 ,0xdf ,0xe5 ,0x22 ,
+        0xfd ,0x4d ,0xa7 ,0x2c ,0x26 ,0x9e ,0x33 ,0xbe ,
+        0x50 ,0xde ,0xe2 ,0xe1 ,0x57 ,0xa0 ,0x9d ,0xde};
+    unsigned char public_key[AKC_PUBLIC_KEY_LEN] = {0x54 ,0xad ,0xaf ,0x16 ,0x19 ,0x86 ,0xeb ,0x9f ,0x2b ,0xf0 ,0x26 ,0xac ,0xba ,0x30 ,0xc6 ,0x1d ,0x39 ,0xf2 ,0x08 ,0x88 ,0xee ,0x43 ,0xad ,0x9c ,0xab ,0x91 ,0x99 ,0x6f ,0x61 ,0x70 ,0x74 ,0xd2 ,0x54 ,0xbe ,0xa1 ,0xa3 ,0xf5 ,0x48 ,0x6b ,0x39 ,0x45 ,0x21 ,0x49 ,0x5d ,0xbe ,0x4e ,0x81 ,0x7c ,0x9e ,0x2c ,0x5a ,0x51 ,0xc8 ,0x6b ,0xa1 ,0x61 ,0x79 ,0xc2 ,0x68 ,0x3b ,0xb0 ,0x1e ,0x89 ,0xa9};
+    
+    EccPoint p_publicKey;
+    //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
+    memcpy(p_publicKey.x, (unsigned char *)public_key, AKC_KEY_LEN);
+    memcpy(p_publicKey.y, (unsigned char *)public_key+AKC_KEY_LEN, AKC_KEY_LEN);
+    
+    int verifyres =  ecdsa_verify(&p_publicKey, id_hash, r, s);
+    if (verifyres!=1) {
+        printf("\n ecdsa_verify test fail \n");
+        return -2;
     }
     return 0;
 }
 
-unsigned char * sm3ABCTEST()
+int sm2ECDH_TEST()
 {
-    unsigned char test[AKC_KEY_LEN] = {0};
-    sm3((unsigned char*)"abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",64, test);
-    unsigned char *testsm3 = malloc(32);
-    memcpy(testsm3, test , AKC_KEY_LEN);
-    return testsm3;
+    unsigned char public_key1[64] = {
+        0x21 ,0x8e,0x5a ,0x72 ,0xbb ,0x5a ,0x7b ,0x0e ,
+        0x67 ,0x3b ,0x7f ,0x94 ,0x05 ,0xe9 ,0x49 ,0x76 ,
+        0x40 ,0x2c ,0x08 ,0x03 ,0x61 ,0x14 ,0xa5 ,0x85 ,
+        0x37 ,0x52 ,0x2d ,0x13 ,0xa4 ,0xad ,0x14 ,0xdb ,
+        0xdf ,0xf6 ,0xb9 ,0x76 ,0xa5 ,0x29 ,0xd5 ,0x8d ,
+        0x9c ,0xcc ,0xb5 ,0x89 ,0x92 ,0x36 ,0x8d ,0xf0 ,
+        0xef ,0x91 ,0x79 ,0x8a ,0x75 ,0x61 ,0x79 ,0x11 ,
+        0x88 ,0xce ,0x9b ,0x89 ,0x16 ,0x24 ,0x47 ,0x15 };
+    
+    unsigned char private_key1[32] = {
+        0x57 ,0x47 ,0x55 ,0xe8 ,0x39 ,0x3d ,0x53 ,0x48 ,
+        0x46 ,0x1c ,0xe1 ,0xae ,0x65 ,0x97 ,0x73 ,0x65 ,
+        0xeb ,0x7b ,0xc7 ,0x3f ,0x61 ,0x5b ,0xf1 ,0x26 ,
+        0x16 ,0x0f ,0xff ,0xe2 ,0x79 ,0xd5 ,0xd3 ,0xd7};
+    
+    
+    
+    
+    unsigned char public_key2[64] = {
+        0x04 ,0xb8 ,0xb0 ,0x1d ,0xc7 ,0x3a ,0x34 ,0xc7 ,
+        0x53 ,0x0c ,0xe0 ,0xab ,0xa4 ,0xf1 ,0x53 ,0x98 ,
+        0xe7 ,0x13 ,0x7a ,0x76 ,0x82 ,0x07 ,0x8b ,0xac ,
+        0x25 ,0x4a ,0x86 ,0x79 ,0x73 ,0x0b ,0x4e ,0xed ,
+        0x5d ,0x98 ,0x5c ,0x36 ,0x55 ,0x8e ,0x78 ,0x5b ,
+        0x7c ,0xf2 ,0x6a ,0xbf ,0x65 ,0xb4 ,0x73 ,0x0b ,
+        0x12 ,0x88 ,0x9d ,0x0e ,0xa0 ,0x8d ,0xa9 ,0x52 ,
+        0x8a ,0xe1 ,0xfd ,0x0a ,0x24 ,0x22 ,0x18 ,0xf7};
+    
+    unsigned char private_key2[32] = {
+        0x72 ,0xf8 ,0x5b ,0x36 ,0xab ,0x28 ,0x57 ,0x29 ,
+        0xe5 ,0x55 ,0x05 ,0xb4 ,0x3f ,0x8a ,0xdd ,0xb4 ,
+        0x03 ,0x75 ,0xed ,0x56 ,0x31 ,0xce ,0x4b ,0x85 ,
+        0x60 ,0x16 ,0x55 ,0x17 ,0x3a ,0xd1 ,0xfa ,0xce};
+    
+    
+    unsigned char share[32] = {
+        0x76 ,0xf1 ,0xdd ,0x99 ,0x5e ,0xce ,0x32 ,0x5e ,
+        0x65 ,0xfe ,0xab ,0xc4 ,0x92 ,0xc8 ,0xe9 ,0x2e ,
+        0x20 ,0x31 ,0x88 ,0x73 ,0xac ,0x17 ,0xc1 ,0x7d ,
+        0x42 ,0x1e ,0x3b ,0x9a ,0x1b ,0x6b ,0xea ,0x20 };
+    
+    unsigned char *share1;
+    akc_calculate_ecdh(&share1, public_key2, private_key1);
+    if (byte_cmp(share1, share, 32)!=0) {
+        printf("\n sm2ECDH_TEST,share1!=share");
+        return -1;
+    }
+    unsigned char *share2;
+    akc_calculate_ecdh(&share2, public_key1, private_key2);
+    if (byte_cmp(share2, share, 32)!=0) {
+        printf("\n sm2ECDH_TEST,share2!=share");
+        return -1;
+    }
+    if (byte_cmp(share2, share1, 32)!=0) {
+        printf("\n sm2ECDH_TEST,share2!=share1");
+        return -1;
+    }
+    return 0;
 }
 
-size_t sm4ABC_ENCRYPT_TEST(unsigned char **output)
+int randomTest(char *outpath)
 {
-    const unsigned char key[AKC_MESSAGE_KEY_LEN] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
-    const unsigned char iv[AKC_IV_LEN] = {0x32, 0x5E, 0x22, 0x47, 0x58, 0xB0, 0x7C, 0x10, 0x66, 0xBB, 0xC1, 0x5A, 0xC5, 0x46, 0x89, 0xED};
-    size_t len = akc_sm4_encrypt((unsigned char*)"abc", 3, key, iv, output);
-    return len;
+    
+    FILE *f;
+    if( ( f = fopen( outpath, "w+" ) ) == NULL )
+        return( -1 );
+    
+    int res = 0;
+    unsigned char random[32] = {0};
+    float α = 0.01;
+    
+    unsigned char all_freq_monobit_res[1000] = {0};
+    unsigned char all_freq_block_res[1000] = {0};
+    unsigned char all_run_res[1000] = {0};
+    unsigned char all_runs_one_block_res[1000] = {0};
+
+    
+    for (int i=0; i<1000; i++) {
+        fprintf(f, "index : %d \n", i);
+        
+        genRandomString(random,32);
+        
+        //单比特频数检测
+        float freq_monobit_res = freq_monobit(random, 32);
+        all_freq_monobit_res[i] = (freq_monobit_res >= α);
+        fprintf(f, "freq_monobit_res : %f", freq_monobit_res);
+        fprintf(f, " pass : %d\n", all_freq_monobit_res[i]);
+        
+       
+        //块内频数
+        float freq_block_res =  freq_block(random, 32, 4);
+        all_freq_block_res[i] = (freq_block_res >= α);
+        fprintf(f, "freq_block_res : %f", freq_block_res);
+        fprintf(f, " pass : %d\n", all_freq_block_res[i]);
+        
+        
+        //游程总数检测
+        float run_res =  runs(random, 32);
+        all_run_res[i] = (run_res >= α);
+        fprintf(f, "run_res : %f", run_res);
+        fprintf(f, " pass : %d\n", all_run_res[i]);
+        
+       
+        //块内最大1游程检测
+        float runs_one_block_res =  runs_one_block(random,32,SMALL_BLOCK);
+        all_runs_one_block_res[i] = (runs_one_block_res >= α);
+        fprintf(f, "runs_one_block_res : %f", runs_one_block_res);
+        fprintf(f, " pass : %d\n", all_runs_one_block_res[i]);
+        
+        fputs("\n", f);
+       
+        memset(random, 0, AKC_KEY_LEN);
+    }
+    
+   
+
+    double freq_monobit_res_passingrate = (double)byte_add(all_freq_monobit_res, 1000)/1000;
+    double freq_block_res_passingrate = (double)byte_add(all_freq_block_res, 1000)/1000;
+    double run_res_passingrate = (double)byte_add(all_run_res, 1000)/1000;
+    double runs_one_block_res_passingrate = (double)byte_add(all_runs_one_block_res, 1000)/1000;
+
+    fprintf(f, "freq_monobit_res_passingrate : %f\n", freq_monobit_res_passingrate);
+    fprintf(f, "freq_block_res_passingrate : %f\n", freq_block_res_passingrate);
+    fprintf(f, "run_res_passingrate : %f\n", run_res_passingrate);
+    fprintf(f, "runs_one_block_res_passingrate : %f\n", runs_one_block_res_passingrate);
+    
+    memset(all_freq_monobit_res, 0, 1000);
+    memset(all_freq_block_res, 0, 1000);
+    memset(all_run_res, 0, 1000);
+    memset(all_runs_one_block_res, 0, 1000);
+
+    
+    if (!(freq_monobit_res_passingrate>=0.98 && freq_block_res_passingrate>=0.98 && run_res_passingrate>=0.98 && runs_one_block_res_passingrate>=0.98)) {
+        res =  -1;
+    }
+    
+    fclose( f );
+    f = NULL;
+    return res;
 }
-size_t sm4ABC_DEENCRYPT_TEST(const unsigned char *input,size_t inlen,unsigned char **output)
+
+int genRandomString(unsigned char* ouput,int length)
 {
-    const unsigned char key[AKC_MESSAGE_KEY_LEN] = {0x95, 0x8E, 0x72, 0xE6, 0x3C, 0x1B, 0x65, 0xD3, 0x25, 0xAC, 0xF7, 0xF6, 0x50, 0xAF, 0xBA, 0x75};
-    const unsigned char iv[AKC_IV_LEN] = {0x32, 0x5E, 0x22, 0x47, 0x58, 0xB0, 0x7C, 0x10, 0x66, 0xBB, 0xC1, 0x5A, 0xC5, 0x46, 0x89, 0xED};
-    size_t len =  akc_sm4_decrypt(input, inlen, key, iv, output);
-    return len;
+    sfmt_t sfmt;
+    sfmt_init_gen_rand(&sfmt, (unsigned)time( NULL ) + rand());
+    int i;
+    for (i = 0; i < length; i++)
+    {
+        ouput[i] = sfmt_genrand_uint32(&sfmt);
+    }
+    return 0;
 }
 
 int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_key)
@@ -83,7 +354,7 @@ int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_ke
     unsigned char *key_public = 0;
     unsigned char private[AKC_KEY_LEN];
     unsigned char randomkey[AKC_KEY_LEN];
-    result = genRandomString(randomkey,AKC_KEY_LEN);
+    result = genRandomString(randomkey,32);
     EccPoint public;
     result = ecc_make_key(&public, private, randomkey);
     if(result < 0) {
@@ -122,7 +393,7 @@ int akc_calculate_ecdh(unsigned char **shared_key_data, const unsigned char *pub
     if(!public_key || !private_key) {
         return result;
     }
-    result = genRandomString(p_random,AKC_KEY_LEN);
+    result = genRandomString(p_random,32);
     
     //切割public_key，前32位public.x，后32位public.y，给p_publicKey赋值
     memcpy(p_publicKey.x, public_key, AKC_KEY_LEN);
@@ -420,7 +691,7 @@ int akc_signature(const unsigned char *datasignature,
     unsigned char *signature = 0;
     
     unsigned char randomkey[AKC_KEY_LEN];
-    result = genRandomString(randomkey,AKC_KEY_LEN);
+    result = genRandomString(randomkey,32);
     
     unsigned char r[AKC_KEY_LEN];
     unsigned char s[AKC_KEY_LEN];
@@ -480,6 +751,68 @@ int akc_verify_signature(const unsigned char *datasignature,
     return res;
 }
 
+size_t akc_encrypt_withpublickey(const unsigned char *input,
+                                 size_t inlen,
+                                 const unsigned char *publickey,
+                                 unsigned char **output)
+{
+    unsigned char *tmp_public_key;
+    unsigned char *tmp_private_key;
+    akc_generate_key_pair(&tmp_public_key, &tmp_private_key);
+    
+    unsigned char *share;
+    akc_calculate_ecdh(&share, publickey, tmp_private_key);
+    unsigned char key[AKC_MESSAGE_KEY_LEN];
+    unsigned char iv[AKC_IV_LEN];
+    memcpy(key, share, AKC_MESSAGE_KEY_LEN);
+    memcpy(iv, share+AKC_MESSAGE_KEY_LEN, AKC_IV_LEN);
+    
+    unsigned char *encrypt_out = 0;
+    size_t encrypt_out_len = akc_sm4_encrypt(input, inlen, key, iv, &encrypt_out);
+    
+    unsigned char * final_encrypt_out = malloc(encrypt_out_len+AKC_PUBLIC_KEY_LEN);
+    memcpy(final_encrypt_out, tmp_public_key , AKC_PUBLIC_KEY_LEN);
+    memcpy(final_encrypt_out+AKC_PUBLIC_KEY_LEN, encrypt_out , encrypt_out_len);
+
+    if (tmp_public_key) free(tmp_public_key);
+    if (tmp_private_key) free(tmp_private_key);
+    if (share) free(share);
+    memset(key, 0, AKC_MESSAGE_KEY_LEN);
+    memset(iv, 0, AKC_IV_LEN);
+    
+    *output = final_encrypt_out;
+    return encrypt_out_len+AKC_PUBLIC_KEY_LEN;
+}
+
+size_t akc_decrypt_withprivatekey(const unsigned char *input,
+                                  size_t inlen,
+                                  const unsigned char *privatekey,
+                                  unsigned char **output)
+{
+    unsigned char public_key[AKC_PUBLIC_KEY_LEN];
+    unsigned char input_data[inlen-AKC_PUBLIC_KEY_LEN];
+    memcpy(public_key, input, AKC_PUBLIC_KEY_LEN);
+    memcpy(input_data, input+AKC_PUBLIC_KEY_LEN, inlen-AKC_PUBLIC_KEY_LEN);
+
+    unsigned char *share;
+    akc_calculate_ecdh(&share, public_key, privatekey);
+    unsigned char key[AKC_MESSAGE_KEY_LEN];
+    unsigned char iv[AKC_IV_LEN];
+    memcpy(key, share, AKC_MESSAGE_KEY_LEN);
+    memcpy(iv, share+AKC_MESSAGE_KEY_LEN, AKC_IV_LEN);
+    
+    size_t result = akc_sm4_decrypt(input_data, inlen-AKC_PUBLIC_KEY_LEN, key, iv, output);
+    
+    if (share) free(share);
+    memset(key, 0, AKC_MESSAGE_KEY_LEN);
+    memset(iv, 0, AKC_IV_LEN);
+    memset(public_key, 0, AKC_PUBLIC_KEY_LEN);
+    memset(input_data, 0, inlen-AKC_PUBLIC_KEY_LEN);
+    
+    return result;
+}
+
+
 size_t akc_sm4_encrypt(const unsigned char *input,
                               size_t inlen,
                               const unsigned char *key,
@@ -495,9 +828,6 @@ size_t akc_sm4_encrypt(const unsigned char *input,
     memcpy(plainInChar, input, plainInDataLength);
     //补位内容为需要补的长度
     memset(plainInChar+plainInDataLength, paddingLength, paddingLength);
-#ifdef AKCENCRYPT_DEBUG
-    printf("sm4_encrypt \n plainInDataLength=%lu \n encryptDataLength=%lu \n paddingLength=%lu \n",plainInDataLength,encryptDataLength,paddingLength);
-#endif
     // 输出密文 
     unsigned char *cipherOutChar = (unsigned char *)malloc(encryptDataLength * sizeof(unsigned char));
     unsigned char iv[AKC_IV_LEN];
@@ -545,9 +875,6 @@ size_t akc_sm4_decrypt(const unsigned char *input,
     size_t paddingLength  = plainOutChar[plainWithPaddingLength-1];
     if (plainWithPaddingLength > paddingLength) {
         result = plainWithPaddingLength-paddingLength;
-#ifdef AKCENCRYPT_DEBUG
-        printf("sm4_decrypt \n plainWithPaddingLength=%lu \n paddingLength=%lu \n plainWithOutPaddingLength=%lu \n",plainWithPaddingLength,paddingLength,result);
-#endif
         unsigned char * decryptdata = malloc(result);
         memcpy(decryptdata, plainOutChar , result);
         *output = decryptdata;
@@ -572,4 +899,15 @@ size_t akc_sm3_data(const unsigned char *input,
     memcpy(sm3, sm3data , AKC_KEY_LEN);
     *output = sm3;
     return AKC_KEY_LEN;
+}
+
+int akc_sm3_file(char *path,
+                    unsigned char **output)
+{
+    unsigned char sm3data[AKC_KEY_LEN] = {0};
+    int res = sm3_file(path, sm3data);
+    unsigned char * sm3 = malloc(AKC_KEY_LEN);
+    memcpy(sm3, sm3data , AKC_KEY_LEN);
+    *output = sm3;
+    return res;
 }

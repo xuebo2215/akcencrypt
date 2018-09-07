@@ -2,10 +2,9 @@
  * SM4 Encryption
  * GM/T 0002-2012 Chinese National Standard ref:http://www.oscca.gov.cn/ 
  */
-
-#include "sm4.h"
 #include <string.h>
 #include <stdio.h>
+#include "sm4.h"
 
 /*
  * 32-bit integer manipulation macros (big endian)

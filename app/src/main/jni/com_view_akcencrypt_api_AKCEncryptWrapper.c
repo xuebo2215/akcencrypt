@@ -1,4 +1,5 @@
 #include "com_view_akcencrypt_api_AKCEncryptWrapper.h"
+#include "akc_encrypt.h"
 
 jvalue JNU_CallMethodByName(JNIEnv *env, jboolean *hasException, jobject obj,
 		const char *name, const char *descriptor, ...) {
@@ -63,49 +64,44 @@ jvalue JNU_CallMethodByName(JNIEnv *env, jboolean *hasException, jobject obj,
 	return result;
 }
 
-jbyteArray
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3ABCTEST(JNIEnv* env, jobject thiz){
-    unsigned char *test =  sm3ABCTEST();
-    jbyteArray jarray = (*env)->NewByteArray(env, AKC_KEY_LEN);
-    (*env)->SetByteArrayRegion(env, jarray, 0, AKC_KEY_LEN, (jbyte *)test);
-    if (test) free(test);
-    if (jarray == NULL) {
-        return NULL;
-    }
-    return jarray;
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3ABCTEST
+		(JNIEnv *env, jobject thiz){
+	int res = sm3ABCTEST();
+	return res;
 }
 
-jbyteArray
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ABCENCRYPTTEST(JNIEnv* env, jobject thiz){
-    unsigned char *test;
-    size_t  len = sm4ABC_ENCRYPT_TEST(&test);
-    jbyteArray jarray = (*env)->NewByteArray(env, len);
-    (*env)->SetByteArrayRegion(env, jarray, 0, len, (jbyte *)test);
-    if (test) free(test);
-    if (jarray == NULL) {
-        return NULL;
-    }
-    return jarray;
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ENCRYPTTEST
+		(JNIEnv *env, jobject thiz){
+	int res = sm4_ENCRYPT_TEST();
+	return res;
 }
 
-jbyteArray
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ABCDEENCRYPTTEST(JNIEnv* env, jobject thiz,jbyteArray input){
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2ECDHTEST
+		(JNIEnv *env, jobject thiz){
+	int res = sm2ECDH_TEST();
+	return res;
+}
 
-    size_t input_len  = (*env)->GetArrayLength(env, input);
-    const unsigned char *buf_input = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
-    unsigned char *test;
-    size_t  len = sm4ABC_DEENCRYPT_TEST(buf_input,input_len,&test);
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2SignatureTEST
+		(JNIEnv *env, jobject thiz){
+	int res = sm2signature_TEST();
+	return res;
+}
 
-    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)buf_input, 0);
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTEST
+		(JNIEnv *env, jobject thiz,jbyteArray outpath){
 
-    jbyteArray jarray = (*env)->NewByteArray(env, len);
-    (*env)->SetByteArrayRegion(env, jarray, 0, len, (jbyte *)test);
-    if (test) free(test);
+	char *outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
 
-    if (jarray == NULL) {
-        return NULL;
-    }
-    return jarray;
+	int res = randomTest(outfilepath);
+	(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+
+	return res;
 }
 
 jbyteArray
@@ -384,6 +380,8 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature(JNIEnv* env, jobj
     return jarray;
 }
 
+
+
 jint
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature(JNIEnv* env, jobject thiz,
                                                                      jbyteArray datasignature,
@@ -402,38 +400,100 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature(JNIEnv* env
 }
 
 jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEncryptWithPublicKey(JNIEnv* env, jobject thiz,
+                                                                          jbyteArray input,
+                                                                          jlong inlen,
+                                                                          jbyteArray key){
+    size_t plainLen  = inlen;
+    size_t key_Len  = (*env)->GetArrayLength(env, key);
+    if (key_Len < AKC_PUBLIC_KEY_LEN || inlen <= 0){
+        return NULL;
+    }
+    const unsigned char *buf_plain = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
+    const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
+
+    unsigned char *encrypt_out;
+    size_t encrypt_out_len =  akc_encrypt_withpublickey(buf_plain, plainLen,buf_key,&encrypt_out);
+
+    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)buf_plain, 0);
+    (*env)->ReleaseByteArrayElements(env, key, (jbyte*)buf_key, 0);
+
+    jbyteArray jarray = (*env)->NewByteArray(env, encrypt_out_len);
+    (*env)->SetByteArrayRegion(env, jarray, 0, encrypt_out_len, (jbyte *)encrypt_out);
+
+    if (encrypt_out) free(encrypt_out);
+
+    if (jarray == NULL) {
+        return NULL;
+    }
+
+    return jarray;
+}
+
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDecryptWithPrivateKey(JNIEnv* env, jobject thiz,
+                                                                           jbyteArray input,
+                                                                           jlong inlen,
+                                                                           jbyteArray key){
+
+    size_t key_Len  = (*env)->GetArrayLength(env, key);
+    if (key_Len < AKC_KEY_LEN  || inlen <= 0){
+        return NULL;
+    }
+
+    size_t encryptLen  = inlen;
+    const unsigned char *buf_encrypt = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
+    const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
+
+    unsigned char *decrypt_out;
+    size_t decrypt_out_len =  akc_decrypt_withprivatekey(buf_encrypt,encryptLen,buf_key,&decrypt_out);
+
+    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)buf_encrypt, 0);
+    (*env)->ReleaseByteArrayElements(env, key, (jbyte*)buf_key, 0);
+
+    if (decrypt_out_len > 0 && decrypt_out != NULL){
+        jbyteArray jarray =  (*env)->NewByteArray(env, decrypt_out_len);
+        (*env)->SetByteArrayRegion(env, jarray, 0, decrypt_out_len, (jbyte *)decrypt_out);
+        if (decrypt_out) free(decrypt_out);
+        return jarray;
+    }
+    return NULL;
+}
+
+jbyteArray
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEncryptData(JNIEnv* env, jobject thiz,
-																 jbyteArray input,
-																 jlong inlen,
-																 jbyteArray key,
-																 jbyteArray iv){
-	size_t plainLen  = inlen;
-	size_t key_Len  = (*env)->GetArrayLength(env, key);
-	size_t iv_Len  = (*env)->GetArrayLength(env, iv);
-	if (key_Len < 16 || iv_Len < 16 || inlen <= 0){
-		return NULL;
-	}
-	const unsigned char *buf_plain = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
-	const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
-	const unsigned char *buf_iv = (unsigned char*)((*env)->GetByteArrayElements(env, iv, NULL));
+                                                                 jbyteArray input,
+                                                                 jlong inlen,
+                                                                 jbyteArray key,
+                                                                 jbyteArray iv){
+    size_t plainLen  = inlen;
+    size_t key_Len  = (*env)->GetArrayLength(env, key);
+    size_t iv_Len  = (*env)->GetArrayLength(env, iv);
+    if (key_Len < 16 || iv_Len < 16 || inlen <= 0){
+        return NULL;
+    }
+    const unsigned char *buf_plain = (unsigned char*)((*env)->GetByteArrayElements(env, input, NULL));
+    const unsigned char *buf_key = (unsigned char*)((*env)->GetByteArrayElements(env, key, NULL));
+    const unsigned char *buf_iv = (unsigned char*)((*env)->GetByteArrayElements(env, iv, NULL));
 
     unsigned char *encrypt_out;
     size_t encrypt_out_len =  akc_sm4_encrypt(buf_plain, plainLen,buf_key,buf_iv,&encrypt_out);
 
-	(*env)->ReleaseByteArrayElements(env, input, (jbyte*)buf_plain, 0);
-	(*env)->ReleaseByteArrayElements(env, key, (jbyte*)buf_key, 0);
-	(*env)->ReleaseByteArrayElements(env, iv, (jbyte*)buf_iv, 0);
+    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)buf_plain, 0);
+    (*env)->ReleaseByteArrayElements(env, key, (jbyte*)buf_key, 0);
+    (*env)->ReleaseByteArrayElements(env, iv, (jbyte*)buf_iv, 0);
 
-	jbyteArray jarray = (*env)->NewByteArray(env, encrypt_out_len);
-	(*env)->SetByteArrayRegion(env, jarray, 0, encrypt_out_len, (jbyte *)encrypt_out);
+    jbyteArray jarray = (*env)->NewByteArray(env, encrypt_out_len);
+    (*env)->SetByteArrayRegion(env, jarray, 0, encrypt_out_len, (jbyte *)encrypt_out);
 
-	if (encrypt_out) free(encrypt_out);
+    if (encrypt_out) free(encrypt_out);
 
-	if (jarray == NULL) {
-		return NULL;
-	}
+    if (jarray == NULL) {
+        return NULL;
+    }
 
-	return jarray;
+    return jarray;
 }
 
 jbyteArray
@@ -468,4 +528,25 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDecryptData(JNIEnv* env, jo
 		return jarray;
 	}
 	return NULL;
+}
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3File(JNIEnv* env, jobject thiz,
+                                                             jbyteArray input){
+
+
+    char *filePath = (char*)((*env)->GetByteArrayElements(env, input, NULL));
+
+    unsigned char *decrypt_out;
+    int res =  akc_sm3_file(filePath,&decrypt_out);
+
+    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)filePath, 0);
+
+    if (res== 0 && decrypt_out != NULL){
+        jbyteArray jarray =  (*env)->NewByteArray(env, 32);
+        (*env)->SetByteArrayRegion(env, jarray, 0, 32, (jbyte *)decrypt_out);
+        if (decrypt_out) free(decrypt_out);
+        return jarray;
+    }
+    return NULL;
 }

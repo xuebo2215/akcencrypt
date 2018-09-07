@@ -30,20 +30,33 @@ public class AKCEncryptWrapper {
 
     /*
     * 测试SM3
-    * 返回 debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732
+    * 返回 0 success
     * */
-    public native byte[] NativeSM3ABCTEST();
+    public native int NativeSM3ABCTEST();
 
     /*
     * SM4 加密测试
-    * 返回 f3f1d0c3 dedcbfd5 6fba1bf0 9f21d44a
+    * 返回 0 success
     * */
-    public native byte[] NativeSM4ABCENCRYPTTEST();
+    public native int NativeSM4ENCRYPTTEST();
+
     /*
-     * SM4 解密测试
-     * 返回 616263 /// UTF-8 abc
-     * */
-    public native byte[] NativeSM4ABCDEENCRYPTTEST(byte[]input);
+        * SM2 ECDH测试
+        * 返回 0 success
+        * */
+    public native int NativeSM2ECDHTEST();
+
+    /*
+        * SM2 ECDSA测试
+        * 返回 0 success
+        * */
+    public native int NativeSM2SignatureTEST();
+
+    /*
+        * radom 质量检测测试
+        * 返回 0 success
+        * */
+    public native int NativeRandomTEST(byte[]outpath);
 
     /*
     *  生成keypair
@@ -141,6 +154,29 @@ public class AKCEncryptWrapper {
                                             byte[]signature);
 
     /*
+    * 公钥加密
+    * @param input 输入明文 byte数组
+    * @param inlen  明文数组长度
+    * @param key 公钥
+    * return byte数组 密文
+    * */
+    public native byte[] NativeEncryptWithPublicKey(byte[]input,
+                                                    long inlen,
+                                                    byte[]publickkey);
+
+    /*
+   * 私钥解密
+   * @param input 输入密文 byte数组
+   * @param inlen  密文数组长度
+   * @param key 私钥
+   * return byte数组 密文
+   * */
+    public native byte[] NativeDecryptWithPrivateKey(byte[]input,
+                                                     long inlen,
+                                                     byte[]privatekey);
+
+
+    /*
     *  加密
     * @param input 输入明文 byte数组
     * @param inlen  明文数组长度
@@ -164,5 +200,12 @@ public class AKCEncryptWrapper {
                                            long inlen,
                                            byte[]key,
                                            byte[]miv);
+
+    /*
+    *  解密
+    * @param inputfilepath 文件路径
+    * return byte数组 文件SM3
+    * */
+    public native byte[] NativeSM3File(byte[]inputfilepath);
 
 }

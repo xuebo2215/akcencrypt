@@ -5,54 +5,48 @@
 //  Created by 薛波 on 2017/10/19.
 //  Copyright © 2017年 Aegis Inc. All rights reserved.
 //
+
+#ifndef akc_encrypt_h
+#define akc_encrypt_h
+
 #define AKC_KEY_LEN 32
 #define AKC_PUBLIC_KEY_LEN 64
 #define AKC_MESSAGE_KEY_LEN 16
 #define AKC_IV_LEN 16
 #define MAX_FILE_DATA_BLOCK 512
 
-//#define AKCENCRYPT_DEBUG
-
-#ifdef ANDROID
-    #include <android/log.h>
-    #define LOG    "akc_encrypt"
-    #define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG,__VA_ARGS__)
-    #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG,__VA_ARGS__)
-    #define LOGW(...)  __android_log_print(ANDROID_LOG_WARN,LOG,__VA_ARGS__)
-    #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG,__VA_ARGS__)
-    #define LOGF(...)  __android_log_print(ANDROID_LOG_FATAL,LOG,__VA_ARGS__)
-    #define LOGDenc(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG,__VA_ARGS__)
-#else
-    #define LOGDenc(...)
-    #define LOGD(...)
-    #define LOGE(...)
-#endif
-
+#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include "sm2.h"
-#include "sm3.h"
-#include "sm4.h"
-
-#ifndef akc_encrypt_h
-#define akc_encrypt_h
+#include <stdint.h>
+#include <limits.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
     
 // 测试方法
-// Output:debe9ff9 2275b8a1 38604889 c18e5a4d 6fdb70e5 387e5765 293dcba3 9c0c5732
-unsigned char * sm3ABCTEST();
+// 0 success
+int sm3ABCTEST();
     
-// Output:f3f1d0c3 dedcbfd5 6fba1bf0 9f21d44a
-size_t sm4ABC_ENCRYPT_TEST(unsigned char **output);
+// 0 success
+int sm4_ENCRYPT_TEST();
+   
+// 0 success
+int sm2ECDH_TEST();
+
+// 0 success
+int sm2signature_TEST();
     
-// Output:616263 UTF-8 abc
-size_t sm4ABC_DEENCRYPT_TEST(const unsigned char *input,size_t inlen,unsigned char **output);
+// 0 success
+int randomTest(char *outpath);
+
+    
+
+int genRandomString(unsigned char* ouput,int length);
+
 /**
  * 生成公私钥对
  *
@@ -62,6 +56,7 @@ size_t sm4ABC_DEENCRYPT_TEST(const unsigned char *input,size_t inlen,unsigned ch
  * reuturn 1 成功
  */
 int akc_generate_key_pair(unsigned char **public_key, unsigned char **private_key);
+int akc_calculate_ecdh(unsigned char **shared_key_data, const unsigned char *public_key, const unsigned char *private_key);
 
 /**
  * sender rootkey生成
@@ -190,6 +185,16 @@ int akc_verify_signature(const unsigned char *datasignature,
                          size_t datasignature_len,
                          const unsigned char *signature);
     
+size_t akc_encrypt_withpublickey(const unsigned char *input,
+                                 size_t inlen,
+                                 const unsigned char *publickey,
+                                 unsigned char **output);
+    
+size_t akc_decrypt_withprivatekey(const unsigned char *input,
+                                 size_t inlen,
+                                 const unsigned char *privatekey,
+                                 unsigned char **output);
+    
 /**
  * 加密
  *
@@ -204,6 +209,8 @@ size_t akc_sm4_encrypt(const unsigned char *input,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output);
+    
+
  
 /**
  * 解密
@@ -219,7 +226,13 @@ size_t akc_sm4_decrypt(const unsigned char *input,
                               const unsigned char *key,
                               const unsigned char *miv,
                               unsigned char **output);
+    
+    
+size_t akc_sm3_data(const unsigned char *input,
+                    size_t inlen,
+                    unsigned char **output);
 
+int akc_sm3_file(char *path,unsigned char **output);
 
 
 #ifdef __cplusplus

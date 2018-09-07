@@ -1,8 +1,7 @@
-#include "sm2.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "sm2.h"
 
 typedef unsigned int uint;
 
