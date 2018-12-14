@@ -17,10 +17,18 @@ JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3A
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
- * Method:    NativeSM4ENCRYPTTEST
+ * Method:    NativeSM3HMACTEST
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ENCRYPTTEST
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3HMACTEST
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM4TEST
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4TEST
   (JNIEnv *, jobject);
 
 /*
@@ -33,10 +41,42 @@ JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2E
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
- * Method:    NativeSM2SignatureTEST
+ * Method:    NativeSM2VerifyTEST
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2SignatureTEST
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2VerifyTEST
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM2SignatureVerifyTEST
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2SignatureVerifyTEST
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM2DecryptTEST
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2DecryptTEST
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM2EncryptDecryptTEST
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2EncryptDecryptTEST
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeSM2ConTEST
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2ConTEST
   (JNIEnv *, jobject);
 
 /*
@@ -46,6 +86,30 @@ JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2S
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTEST
   (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeEnable
+ * Signature: ([B)V
+ */
+JNIEXPORT void JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEnable
+  (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeDisable
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDisable
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeIsEnable
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeIsEnable
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
@@ -122,18 +186,18 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeSignature
- * Signature: ([B)[B
+ * Signature: ([B[B[B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature
-  (JNIEnv *, jobject, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeVerifySignature
- * Signature: ([B[B)I
+ * Signature: ([B[B[B)I
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature
-  (JNIEnv *, jobject, jbyteArray, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
@@ -174,6 +238,14 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
  */
 JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3File
   (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
+ * Method:    NativeHKDF
+ * Signature: ([BJ)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeHKDF
+  (JNIEnv *, jobject, jbyteArray, jlong);
 
 #ifdef __cplusplus
 }

@@ -35,28 +35,77 @@ public class AKCEncryptWrapper {
     public native int NativeSM3ABCTEST();
 
     /*
-    * SM4 加密测试
+    * 测试SM3HMAC
     * 返回 0 success
     * */
-    public native int NativeSM4ENCRYPTTEST();
+    public native int NativeSM3HMACTEST();
+
+    /*
+    * SM4 测试
+    * 返回 0 success
+    * */
+    public native int NativeSM4TEST();
 
     /*
         * SM2 ECDH测试
         * 返回 0 success
         * */
     public native int NativeSM2ECDHTEST();
-
     /*
-        * SM2 ECDSA测试
+        * SM2 验签测试
         * 返回 0 success
         * */
-    public native int NativeSM2SignatureTEST();
+    public native int NativeSM2VerifyTEST();
+
+    /*
+        * SM2 签名/验签测试
+        * 返回 0 success
+        * */
+    public native int NativeSM2SignatureVerifyTEST();
+
+    /*
+        * SM2 解密测试
+        * 返回 0 success
+        * */
+    public native int NativeSM2DecryptTEST();
+
+    /*
+        * SM2 加密/解密测试
+        * 返回 0 success
+        * */
+    public native int NativeSM2EncryptDecryptTEST();
+
+    /*
+       * SM2 一致性测试
+       * 返回 0 success
+       * */
+    public native int NativeSM2ConTEST();
 
     /*
         * radom 质量检测测试
         * 返回 0 success
         * */
     public native int NativeRandomTEST(byte[]outpath);
+
+
+    /*
+        * enable 模块
+        * @param deviceinfo 设备运行信息
+        * */
+    public native void NativeEnable(byte[]deviceinfo);
+
+    /*
+        * disable 模块
+        * */
+    public native void NativeDisable();
+
+    /*
+    *
+    *  return 1 enable 0 disable
+    * */
+    public native int NativeIsEnable();
+
+
 
     /*
     *  生成keypair
@@ -140,18 +189,22 @@ public class AKCEncryptWrapper {
     /**
      * 消息签名
      * @param datasignature 待签名数据
-     * @ Returns signature_out 128 位签名
+     * @param my_spka 我的签名私钥
+     * @param my_spkb 我的签名公钥
+     * @ Returns signature_out 签名
      */
-    public native byte[] NativeSignature(byte[]datasignature);
+    public native byte[] NativeSignature(byte[]datasignature,byte[]my_spka,byte[]my_spkb);
 
     /**
      * 消息签名验证
      * @param datasignature 待验签数据
      * @param signature 签名
+     * @param their_spkb 对方签名公钥
      *  @ Returns 1 if the signature is valid, 0 if it is invalid.
      */
     public native int NativeVerifySignature(byte[]datasignature,
-                                            byte[]signature);
+                                            byte[]signature,
+                                            byte[]their_spkb);
 
     /*
     * 公钥加密
@@ -207,5 +260,13 @@ public class AKCEncryptWrapper {
     * return byte数组 文件SM3
     * */
     public native byte[] NativeSM3File(byte[]inputfilepath);
+
+    /*
+    *   密钥派生
+    * @param inputkeyseed 输入密钥seed
+    * @param len 密钥长度
+    * return byte数组 生成的密钥
+    * */
+    public native byte[] NativeHKDF(byte[]inputkeyseed,long len);
 
 }

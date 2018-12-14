@@ -40,7 +40,7 @@ unsigned int ones_count(unsigned char* buf, unsigned int buf_len)
 unsigned int run_count(unsigned char* buf, unsigned int buf_len)
 {   
     unsigned int run_sum = 0;
-    unsigned int previous;
+    unsigned int previous = 0;
     int check_boundry = 0;
     for(unsigned int i = 0; i < buf_len; i++)
     {

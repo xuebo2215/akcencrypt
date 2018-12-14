@@ -5,6 +5,8 @@
 #include "consts.h"
 #include "utils.h"
 #include "cephes.h"
+#include <string.h>
+
 
 float freq_monobit(unsigned char* buf, unsigned int buf_size)
 {
@@ -30,6 +32,24 @@ float freq_block(unsigned char* buf, unsigned int buf_size, unsigned int block_s
     return cephes_igamc(num_blocks/2.0, chi_sq/2.0);
 }
 
+float poker(unsigned char* buf, unsigned int buf_size)
+{
+    int m = 4;
+    int N = buf_size/m;
+    float sum = 0.0;
+    for (int ni=0; ni<pow(2, m); ni++) {
+        unsigned char *buf_block = (unsigned char *)malloc(m * sizeof(unsigned char));
+        memset(buf_block, 0, m);
+        memcpy(buf_block, buf+ni, m);
+        sum+=pow(bit_sum(buf_block, m), 2);
+    }
+    //sum = 12.5;
+    printf("sum=%f\n",sum);
+    float v = fabs((pow(2, m)/N)*sum - N);
+    float pvalue = cephes_igamc((pow(2, m)-1)/2.0, v/2.0);
+    printf("(2^m-1)/2=%f, V=%f, psum=%f\n",(pow(2, m)-1)/2.0,v,pvalue);
+    return pvalue;
+}
 
 float runs(unsigned char* buf, unsigned int buf_size)
 {
@@ -82,3 +102,6 @@ float runs_one_block(unsigned char* buf, unsigned int buf_size, unsigned int blo
     free(v_count);
     return out;
 }
+
+
+

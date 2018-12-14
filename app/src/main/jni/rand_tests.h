@@ -9,5 +9,6 @@ float freq_monobit(unsigned char* buf, unsigned int buf_size);
 float freq_block(unsigned char* buf, unsigned int buf_size, unsigned int block_size);
 float runs(unsigned char* buf, unsigned int buf_size);
 float runs_one_block(unsigned char* buf, unsigned int buf_size, unsigned int block_size);
+float poker(unsigned char* buf, unsigned int buf_size);
 
 #endif

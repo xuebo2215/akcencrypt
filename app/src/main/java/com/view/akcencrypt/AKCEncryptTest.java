@@ -57,32 +57,49 @@ public class AKCEncryptTest {
         //测试libakcencrypt.so库
         final AKCEncryptWrapper encryptWrapper = AKCEncryptWrapper.getInstance();
 
+        byte[] deviceinfo = "deviceinfotest".getBytes("UTF-8");
+        encryptWrapper.NativeEnable(deviceinfo);
+
         int testsm3 = encryptWrapper.NativeSM3ABCTEST();
         Log.d(TAG, "testsm3:\r\n" + testsm3);
 
-        int sm4EncryptTest = encryptWrapper.NativeSM4ENCRYPTTEST();
+        int SM3HMACTEST = encryptWrapper.NativeSM3HMACTEST();
+        Log.d(TAG, "SM3HMACTEST:\r\n" + SM3HMACTEST);
+
+        int sm4EncryptTest = encryptWrapper.NativeSM4TEST();
         Log.d(TAG, "sm4EncryptTest:\r\n" + sm4EncryptTest);
 
         int sm2ECDHTest = encryptWrapper.NativeSM2ECDHTEST();
         Log.d(TAG, "sm2ECDHTest:\r\n" + sm2ECDHTest);
 
-        int SM2SignatureTest = encryptWrapper.NativeSM2SignatureTEST();
-        Log.d(TAG, "SM2SignatureTest:\r\n" + SM2SignatureTest);
+        int SM2VerifyTEST = encryptWrapper.NativeSM2VerifyTEST();
+        Log.d(TAG, "SM2VerifyTEST:\r\n" + SM2VerifyTEST);
+
+        int SM2SignatureVerifyTEST = encryptWrapper.NativeSM2SignatureVerifyTEST();
+        Log.d(TAG, "SM2SignatureVerifyTEST:\r\n" + SM2SignatureVerifyTEST);
+
+        int SM2DecryptTEST = encryptWrapper.NativeSM2DecryptTEST();
+        Log.d(TAG, "SM2DecryptTEST:\r\n" + SM2DecryptTEST);
+
+        int SM2EncryptDecryptTEST = encryptWrapper.NativeSM2EncryptDecryptTEST();
+        Log.d(TAG, "SM2EncryptDecryptTEST:\r\n" + SM2EncryptDecryptTEST);
+
+        int NativeSM2ConTEST = encryptWrapper.NativeSM2ConTEST();
+        Log.d(TAG, "NativeSM2ConTEST:\r\n" + NativeSM2ConTEST);
 
 
-        File randomTestFile =  createNewFile(new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Android/data/"+"com.view.akcencrypt.test"+"/randomtest.txt"));
+        /*File randomTestFile =  createNewFile(new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/Android/data/"+"com.view.akcencrypt.test"+"/randomtest.txt"));
         if (randomTestFile.exists())
         {
             Log.d(TAG, "randomTestFile exists\r\n" );
         }else{
             Log.d(TAG, "randomTestFile not exists\r\n" );
         }
-
         String filepath =  randomTestFile.getAbsolutePath();
         Log.d(TAG, "filepath:\r\n" + filepath);
-        byte[] filepathbyte = filepath.getBytes("UTF-8");
-        int randomTest = encryptWrapper.NativeRandomTEST(filepathbyte);
-        Log.d(TAG, "randomTest:\r\n" + randomTest);
+        byte[] filepathbyte = filepath.getBytes("UTF-8");*/
+        int RandomTEST = encryptWrapper.NativeRandomTEST(null);
+        Log.d(TAG, "RandomTEST:\r\n" + RandomTEST);
 
 
 
@@ -233,10 +250,12 @@ public class AKCEncryptTest {
         byte error_key_test[] = encryptWrapper.NativeDecryptData(alice_send_messageencrypt,alice_send_messageencrypt.length,error_key,error_iv);
         if (error_key_test==null){
             Log.e(TAG,"error_key_test is null,NativeDecryptData ERROR");
+        }else{
+            Log.d(TAG, "error_key_test:\r\n" + AKCEncryptTest.getHexString(error_key_test));
+            String error_key_test_dencrypt = new String(error_key_test,"utf-8");
+            Log.d(TAG, "error_key_test_dencrypt:\r\n" + error_key_test_dencrypt);
         }
-        Log.d(TAG, "error_key_test:\r\n" + AKCEncryptTest.getHexString(error_key_test));
-        String error_key_test_dencrypt = new String(error_key_test,"utf-8");
-        Log.d(TAG, "error_key_test_dencrypt:\r\n" + error_key_test_dencrypt);
+
 
 
         byte[] alicemessageHmac = encryptWrapper.NativeMessageHMAC(alice_send_messageencrypt,alice_send_message_mac);
@@ -252,34 +271,20 @@ public class AKCEncryptTest {
         Log.d(TAG, "alice_send_dencrypt:\r\n" + alice_send_dencrypt);
         Log.d(TAG, "bob_recv_dencrypt:\r\n" + bob_recv_dencrypt);
 
-        byte signature[] = encryptWrapper.NativeSignature(alice_send_messageencrypt);
+
+        Log.d(TAG, "alicesign_public2:\r\n" + AKCEncryptTest.getHexString(alicesign_public));
+        Log.d(TAG, "alicesign_private2:\r\n" + AKCEncryptTest.getHexString(alicesign_private));
+
+        byte signature[] = encryptWrapper.NativeSignature(alice_send_messageencrypt,alicesign_private,alicesign_public);
         Log.d(TAG, "signature:\r\n" + AKCEncryptTest.getHexString(signature));
 
-        byte signature2[] = encryptWrapper.NativeSignature(alice_send_messageencrypt);
-        Log.d(TAG, "signature2:\r\n" + AKCEncryptTest.getHexString(signature2));
-
-        int ver_signature_alice = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature);
+        int ver_signature_alice = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature,alicesign_public);
         Log.d(TAG, "ver_signature_alice:\r\n" + ver_signature_alice);
 
-        int ver_signature_alice2 = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature2);
+        Log.d(TAG, "signature2:\r\n" + AKCEncryptTest.getHexString(signature));
+        int ver_signature_alice2 = encryptWrapper.NativeVerifySignature(alice_send_messageencrypt,signature,null);
         Log.d(TAG, "ver_signature_alice2:\r\n" + ver_signature_alice2);
 
-        byte[] test_verify_signature = new byte[0];
-        try {
-            test_verify_signature = Base64.decode("LBlL6bL+aqtWwIx2pxoDkMPzfMemngUdDzFowTVyZH8slgyhsQ7usmHjuxbrCzkT8xRbkFsdUXIPpb3x1b+Fj20Vk6Qd8gwOxKCJJii1DBkwJOt2FpRAzJxQjqoR+DnIKQ0IsCHAAs3fJbcvsxfCNoALALbE/qrShp4FBOgRXnc=");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        byte[] test_encrypt = new byte[0];
-        try {
-            test_encrypt = Base64.decode("o5IjUJaFWnhjA5IouO4ULbx/3vHiPY6qMCfueJ2i6/8=");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Log.d(TAG, "test_verify_signature:\r\n" + AKCEncryptTest.getHexString(test_verify_signature));
-        Log.d(TAG, "test_encrypt:\r\n" + AKCEncryptTest.getHexString(test_encrypt));
-        int test_ver_signature = encryptWrapper.NativeVerifySignature(test_encrypt,test_verify_signature);
-        Log.d(TAG, "test_ver_signature:\r\n" + test_ver_signature);
 
 
 
@@ -297,5 +302,15 @@ public class AKCEncryptTest {
         String passcodeDecryptString = new String(passcodeDecrypt,"utf-8");
         Log.d(TAG, "passcodeDecryptString:\r\n" + passcodeDecryptString);
 
+
+        Log.d(TAG, "passcodebyte:\r\n" + AKCEncryptTest.getHexString(passcodebyte) + "\r\n passcodebyte lenght:\r\n" + passcodebyte.length);
+        byte codeHKDF[] = encryptWrapper.NativeHKDF(passcodebyte,32);
+        Log.d(TAG, "codeHKDF:\r\n" + AKCEncryptTest.getHexString(codeHKDF) + "\r\n codeHKDF lenght:\r\n" + codeHKDF.length);
+
+        byte codeHKDF2[] = encryptWrapper.NativeHKDF(passcodebyte,16);
+        Log.d(TAG, "codeHKDF2:\r\n" + AKCEncryptTest.getHexString(codeHKDF2) + "\r\n codeHKDF2 lenght:\r\n" + codeHKDF2.length);
+
+        byte codeHKDF3[] = encryptWrapper.NativeHKDF(passcodebyte,256);
+        Log.d(TAG, "codeHKDF3:\r\n" + AKCEncryptTest.getHexString(codeHKDF3) + "\r\n codeHKDF3 lenght:\r\n" + codeHKDF3.length);
     }
 }

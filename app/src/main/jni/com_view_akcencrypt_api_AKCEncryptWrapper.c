@@ -72,9 +72,16 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3ABCTEST
 }
 
 jint
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4ENCRYPTTEST
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3HMACTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm3HMAC_TEST();
+    return res;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM4TEST
 		(JNIEnv *env, jobject thiz){
-	int res = sm4_ENCRYPT_TEST();
+	int res = sm4_TEST();
 	return res;
 }
 
@@ -86,23 +93,84 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2ECDHTEST
 }
 
 jint
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2SignatureTEST
-		(JNIEnv *env, jobject thiz){
-	int res = sm2signature_TEST();
-	return res;
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2VerifyTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm2_verify_TEST();
+    return res;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2SignatureVerifyTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm2_signature_verify_TEST();
+    return res;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2DecryptTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm2_decrypt_TEST();
+    return res;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2EncryptDecryptTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm2_encrypt_decrypt_TEST();
+    return res;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2ConTEST
+        (JNIEnv *env, jobject thiz){
+    int res = sm2CON_TEST();
+    return res;
 }
 
 jint
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTEST
 		(JNIEnv *env, jobject thiz,jbyteArray outpath){
 
-	char *outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
 
 	int res = randomTest(outfilepath);
-	(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
-
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
 	return res;
 }
+
+void
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEnable
+        (JNIEnv *env, jobject thiz, jbyteArray info){
+
+    char *deviceinfo = (char*)((*env)->GetByteArrayElements(env, info, NULL));
+
+    akc_enable(deviceinfo);
+
+    (*env)->ReleaseByteArrayElements(env, info, (jbyte*)deviceinfo, 0);
+}
+
+
+void
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeDisable
+        (JNIEnv *env, jobject thiz){
+
+    akc_disable();
+
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeIsEnable
+        (JNIEnv *env, jobject thiz)
+{
+    int res = akc_isenable();
+    return res;
+}
+
 
 jbyteArray
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeGeneratekeyPair(JNIEnv* env, jobject thiz){
@@ -355,20 +423,34 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeMessageKeyAndIVAndMac(JNIEn
 
 jbyteArray
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature(JNIEnv* env, jobject thiz,
-                                                               jbyteArray datasignature){
+                                                               jbyteArray datasignature,
+															   jbyteArray my_spka,
+															   jbyteArray my_spkb){
 
+	if (my_spka == NULL) {
+		return NULL;
+	}
     size_t datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
     const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+	const unsigned char *buf_spka = (unsigned char*)((*env)->GetByteArrayElements(env, my_spka, NULL));
+	const unsigned char *buf_spkb = NULL;
+	if (my_spkb != NULL){
+		buf_spkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_spkb, NULL));
+	}
 
-    unsigned char *signature;
-    int res =  akc_signature(buf_datasignature,datasignature_Len,&signature);
+	unsigned char *signature;
+	size_t signature_out_len =  akc_signature_with_privatekey(buf_datasignature,datasignature_Len,buf_spka,buf_spkb,&signature);
 
     (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
+	(*env)->ReleaseByteArrayElements(env, my_spka, (jbyte*)buf_spka, 0);
+	if (buf_spkb!=NULL){
+		(*env)->ReleaseByteArrayElements(env, my_spkb, (jbyte*)buf_spkb, 0);
+	}
 
     jbyteArray jarray = NULL;
-    if (res==1){
-        jarray = (*env)->NewByteArray(env, 128);
-        (*env)->SetByteArrayRegion(env, jarray, 0, 128, (jbyte *)signature);
+    if (signature_out_len > 0){
+        jarray = (*env)->NewByteArray(env, signature_out_len);
+        (*env)->SetByteArrayRegion(env, jarray, 0, signature_out_len, (jbyte *)signature);
     }
 
     if (signature) free(signature);
@@ -380,22 +462,27 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature(JNIEnv* env, jobj
     return jarray;
 }
 
-
-
 jint
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature(JNIEnv* env, jobject thiz,
                                                                      jbyteArray datasignature,
-                                                                     jbyteArray signature){
+                                                                     jbyteArray signature,
+																	 jbyteArray their_spkb){
 
     size_t datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
-    const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+	size_t signature_Len  = (*env)->GetArrayLength(env, signature);
+	const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
     const unsigned char *buf_signature = (unsigned char*)((*env)->GetByteArrayElements(env, signature, NULL));
-
-    int res = akc_verify_signature(buf_datasignature,datasignature_Len,buf_signature);
+	const unsigned char *buf_their_spkb = NULL;
+	if (their_spkb != NULL){
+		buf_their_spkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_spkb, NULL));
+	}
+    int res = akc_verify_signature_with_publickey(buf_datasignature,datasignature_Len,buf_signature,signature_Len,buf_their_spkb);
 
     (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
     (*env)->ReleaseByteArrayElements(env, signature, (jbyte*)buf_signature, 0);
-
+	if (buf_their_spkb != NULL){
+		(*env)->ReleaseByteArrayElements(env, their_spkb, (jbyte*)buf_their_spkb, 0);
+	}
     return res;
 }
 
@@ -546,6 +633,28 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM3File(JNIEnv* env, jobjec
         jbyteArray jarray =  (*env)->NewByteArray(env, 32);
         (*env)->SetByteArrayRegion(env, jarray, 0, 32, (jbyte *)decrypt_out);
         if (decrypt_out) free(decrypt_out);
+        return jarray;
+    }
+    return NULL;
+}
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeHKDF(JNIEnv* env, jobject thiz,
+                                                          jbyteArray input,
+                                                          jlong len){
+
+    size_t keySeed_Len  = (*env)->GetArrayLength(env, input);
+    const  char *keySeed = (char*)((*env)->GetByteArrayElements(env, input, NULL));
+
+    unsigned char *key_out;
+    int res =  AKC_HKDF(keySeed,keySeed_Len,len,&key_out);
+
+    (*env)->ReleaseByteArrayElements(env, input, (jbyte*)keySeed, 0);
+
+    if (res== 0 && key_out != NULL){
+        jbyteArray jarray =  (*env)->NewByteArray(env, len);
+        (*env)->SetByteArrayRegion(env, jarray, 0, len, (jbyte *)key_out);
+        if (key_out) free(key_out);
         return jarray;
     }
     return NULL;
