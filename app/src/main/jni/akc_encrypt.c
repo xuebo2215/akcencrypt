@@ -748,7 +748,7 @@ void akc_enable(const  char *deviceinfo)
     int i;
     for(i = AKC_KEY_LEN; i >= 0; --i)
     {
-        seed += (seedData[i] & 0xFFFF) * (((rand() & 0xFFFF) << 16));
+        seed += (seedData[i] & 0xFFFF) * (((arc4random() & 0xFFFF) << 16));
     }
     DEVICEINFOSEED = seed;
     
@@ -821,7 +821,7 @@ int genRandomString(unsigned char* ouput,int length)
         return 0;
     }
     sfmt_t sfmt;
-    sfmt_init_gen_rand(&sfmt, (unsigned)time( NULL ) + rand() + DEVICEINFOSEED);
+    sfmt_init_gen_rand(&sfmt, (unsigned)time( NULL ) + arc4random() + DEVICEINFOSEED);
     int i;
     for (i = 0; i < length; i++)
     {

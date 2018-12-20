@@ -106,22 +106,20 @@ public class AKCEncryptWrapper {
     public native int NativeIsEnable();
 
 
-
-    /*
-    *  生成keypair
-    *  return 64 + 32 位byte数组 ,前64位公钥，后32位私钥
-    * */
+    /**
+     * 生成密钥
+     * @return 密钥 64 + 32 位byte数组 ,前64位公钥，后32位私钥
+     */
     public native byte[] NativeGeneratekeyPair();
 
-    /*
-    *  生成sender rootkey
-    * @param my_idka 我的私钥
-    * @param my_otpka 我的选取的onetimekey私钥
-    * @param their_spkb 对方签名公钥
-    * @param their_idkb 对方id公钥
-    * @param their_otpkb 对方onetimekey公钥
-    * return 32位byte数组
-    * */
+    /**
+     * @param my_idka 我的私钥
+     * @param my_otpka 我的选取的onetimekey私钥
+     * @param their_spkb 对方签名公钥
+     * @param their_idkb 对方id公钥
+     * @param their_otpkb 对方onetimekey公钥
+     * @return 32位byte数组
+     */
     public native byte[] NativeSenderRootKey(byte[]my_idka,
                                              byte[]my_otpka,
                                              byte[]their_spkb,
