@@ -46,8 +46,8 @@ void printBytes(unsigned char* title, unsigned char* bytes, int len)
     unsigned char* byte[3];
     for (i = 0; i < len; i++)
     {
-        
-        sprintf(byte, "%02x ", bytes[i]);
+
+        snprintf(byte,3, "%02x ", bytes[i]);
         strcat(buf, byte);
         count += 1;
         if (count == 16) {
