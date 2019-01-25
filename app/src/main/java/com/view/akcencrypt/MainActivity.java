@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -13,6 +14,8 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import java.io.UnsupportedEncodingException;
+import android.os.Handler;
+import android.os.Message;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -39,11 +42,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            TextView tv = (TextView) findViewById(R.id.sample_text);
+            tv.setText((String)msg.obj);
+        }
+    };
+
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
     private static final String TAG = "AKCEncryptWrapperTestMainActivity";
+    private void sendMessage(String message){
+        Message ms = Message.obtain();
+        ms.obj = message;
+        handler.sendMessage(ms);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +88,108 @@ public class MainActivity extends AppCompatActivity {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0;i< 9;i++){
+
+                    try {
+                        int taskIndex = i;
+                        if (taskIndex == 0){
+
+                            Log.d("AKCEncryptTest", "正在采集随机数\r\n");
+
+                            sendMessage("正在采集随机数");
+                            AKCEncryptTest.AKCEncryTestRandom();
+                            sendMessage("采集随机数完成");
+
+                            Log.d("AKCEncryptTest", "采集随机数完成\r\n");
+
+                        }else if (taskIndex == 1){
+
+                            Log.d("AKCEncryptTest", "正在采集SM4CBC\r\n");
+
+                            sendMessage("正在采集SM4CBC");
+                            AKCEncryptTest.AKCEncryTestSm4();
+                            sendMessage("采集SM4CBC完成");
+
+                            Log.d("AKCEncryptTest", "采集SM4CBC完成\r\n");
+
+                        }else if (taskIndex == 2){
+
+                            Log.d("AKCEncryptTest", "正在采集SM2密钥对\r\n");
+
+                            sendMessage("正在采集SM2密钥对");
+                            AKCEncryptTest.AKCEncryTestSm2Gen();
+                            sendMessage("采集SM2密钥对完成");
+
+                            Log.d("AKCEncryptTest", "采集SM2密钥对完成\r\n");
+
+                        }else if (taskIndex == 3){
+
+                            Log.d("AKCEncryptTest", "正在采集SM2加解密\r\n");
+
+                            sendMessage("正在采集SM2加解密");
+                            AKCEncryptTest.AKCEncryTestSm2EncryAndDecry();
+                            sendMessage("采集SM2加解密完成");
+
+                            Log.d("AKCEncryptTest", "采集SM2加解密完成\r\n");
+
+                        }else if (taskIndex == 4){
+
+                            Log.d("AKCEncryptTest", "正在采集SM2签名/验签\r\n");
+
+                            sendMessage("正在采集SM2签名/验签");
+                            AKCEncryptTest.AKCEncryTestSm2Sign();
+                            sendMessage("采集SM2签名/验签完成");
+
+                            Log.d("AKCEncryptTest", "采集SM2签名/验签完成\r\n");
+
+                        }else if (taskIndex == 5){
+
+                            Log.d("AKCEncryptTest", "正在采集SM2密钥交换\r\n");
+
+                            sendMessage("正在采集SM2密钥交换");
+                            AKCEncryptTest.AKCEncryTestSm2Ecdh();
+                            sendMessage("采集SM2密钥交换完成");
+
+                            Log.d("AKCEncryptTest", "采集SM2密钥交换完成\r\n");
+
+                        }else if (taskIndex == 6){
+
+                            Log.d("AKCEncryptTest", "正在采集SM3杂凑\r\n");
+
+                            sendMessage("正在采集SM3杂凑");
+                            AKCEncryptTest.AKCEncryTestSm3();
+                            sendMessage("采集SM3杂凑完成");
+
+                            Log.d("AKCEncryptTest", "采集SM3杂凑完成\r\n");
+
+                        }else if (taskIndex == 7){
+
+                            Log.d("AKCEncryptTest", "正在采集算法性能\r\n");
+
+                            sendMessage("正在采集算法性能");
+                            AKCEncryptTest.AKCEncryTestPerformancea();
+                            sendMessage("采集算法性能完成");
+
+                            Log.d("AKCEncryptTest", "采集算法性能完成\r\n");
+
+                        }else{
+                            Log.d("AKCEncryptTest", "结束\r\n");
+                            sendMessage("结束");
+                        }
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+            }
+        }).start();
+
     }
 
     @Override

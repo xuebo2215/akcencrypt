@@ -86,6 +86,25 @@ JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSM2C
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTEST
   (JNIEnv *, jobject, jbyteArray);
+/*
+ * 数据测试
+ */
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTestFormat
+        (JNIEnv *, jobject, jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm4CBCTestFormat
+        (JNIEnv *, jobject, jbyteArray,jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2GenerateTestFormat
+        (JNIEnv *, jobject, jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2EncryptTestFormat
+        (JNIEnv *, jobject, jbyteArray,jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2SignTestFormat
+        (JNIEnv *, jobject, jbyteArray,jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2ECDHTestFormat
+        (JNIEnv *, jobject, jbyteArray,jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm3TestFormat
+        (JNIEnv *, jobject, jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePerformanceaTest
+        (JNIEnv *, jobject, jbyteArray);
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper

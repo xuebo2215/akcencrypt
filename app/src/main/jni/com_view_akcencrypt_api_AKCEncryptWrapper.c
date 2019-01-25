@@ -143,6 +143,170 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTEST
 	return res;
 }
 
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeRandomTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	randomTestFormat(outfilepath);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm4CBCTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath,jbyteArray outpath2){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	char *outfilepath2 = NULL;
+	if (outpath2 != NULL){
+		outfilepath2 = (char*)((*env)->GetByteArrayElements(env, outpath2, NULL));
+	}
+
+	sm4CBCTestFormat(outfilepath,outfilepath2);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+
+	if (outfilepath2 != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath2, (jbyte*)outfilepath2, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2GenerateTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	sm2GenerateTestFormat(outfilepath);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2EncryptTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath,jbyteArray outpath2){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	char *outfilepath2 = NULL;
+	if (outpath2 != NULL){
+		outfilepath2 = (char*)((*env)->GetByteArrayElements(env, outpath2, NULL));
+	}
+
+	sm2EncryptTestFormat(outfilepath,outfilepath2);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+
+	if (outfilepath2 != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath2, (jbyte*)outfilepath2, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2SignTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath,jbyteArray outpath2){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	char *outfilepath2 = NULL;
+	if (outpath2 != NULL){
+		outfilepath2 = (char*)((*env)->GetByteArrayElements(env, outpath2, NULL));
+	}
+
+	sm2SignTestFormat(outfilepath,outfilepath2);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+
+	if (outfilepath2 != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath2, (jbyte*)outfilepath2, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm2ECDHTestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath,jbyteArray outpath2){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	char *outfilepath2 = NULL;
+	if (outpath2 != NULL){
+		outfilepath2 = (char*)((*env)->GetByteArrayElements(env, outpath2, NULL));
+	}
+
+	sm2ECDHTestFormat(outfilepath,outfilepath2);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+
+	if (outfilepath2 != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath2, (jbyte*)outfilepath2, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSm3TestFormat
+		(JNIEnv *env, jobject thiz,jbyteArray outpath){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	sm3TestFormat(outfilepath);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+	return 1;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePerformanceaTest
+		(JNIEnv *env, jobject thiz,jbyteArray outpath){
+
+	char *outfilepath = NULL;
+	if (outpath != NULL){
+		outfilepath = (char*)((*env)->GetByteArrayElements(env, outpath, NULL));
+	}
+
+	performanceaTest(outfilepath);
+	if (outfilepath != NULL){
+		(*env)->ReleaseByteArrayElements(env, outpath, (jbyte*)outfilepath, 0);
+	}
+	return 1;
+}
+
 void
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeEnable
         (JNIEnv *env, jobject thiz, jbyteArray info){

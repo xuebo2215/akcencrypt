@@ -13,12 +13,22 @@
 # limitations under the License.
 #
 
+
+
+
 LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := gmssl
+LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/libcrypto.so
+include $(PREBUILT_SHARED_LIBRARY)
+
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog
 LOCAL_MODULE    := akcencrypt
-
 MY_CPP_LIST := $(wildcard $(LOCAL_PATH)/*.c)
 LOCAL_SRC_FILES := $(MY_CPP_LIST:$(LOCAL_PATH)/%=%)
+LOCAL_SHARED_LIBRARIES := gmssl
+
 
 include $(BUILD_SHARED_LIBRARY)

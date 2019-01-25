@@ -9,6 +9,8 @@ public class AKCEncryptWrapper {
     /** load JNI so */
 
     static {
+        System.loadLibrary("crypto");
+
         System.loadLibrary("akcencrypt");
     }
 
@@ -86,6 +88,19 @@ public class AKCEncryptWrapper {
         * 返回 0 success
         * */
     public native int NativeRandomTEST(byte[]outpath);
+
+
+   /*
+    测试方法
+    */
+    public native int NativeRandomTestFormat(byte[]outpath);
+    public native int NativeSm4CBCTestFormat(byte[]outpath,byte[]outpath2);
+    public native int NativeSm2GenerateTestFormat(byte[]outpath);
+    public native int NativeSm2EncryptTestFormat(byte[]outpath,byte[]outpath2);
+    public native int NativeSm2SignTestFormat(byte[]outpath,byte[]outpath2);
+    public native int NativeSm2ECDHTestFormat(byte[]outpath,byte[]outpath2);
+    public native int NativeSm3TestFormat(byte[]outpath);
+    public native int NativePerformanceaTest(byte[]outpath);
 
 
     /*
