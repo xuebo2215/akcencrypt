@@ -2710,12 +2710,17 @@ size_t akc_signature_with_privatekey_SM2(const  char *myid,
     akc_analysis_pub_xy(&my_spkb_x,&my_spkb_y,my_spkb);
     if (!(ec_key = new_ec_key(ec_group, akc_to_Invert_Hex((const char*)my_spka,AKC_KEY_LEN), akc_to_Invert_Hex((const char*)my_spkb_x,AKC_KEY_LEN), akc_to_Invert_Hex((const char*)my_spkb_y,AKC_KEY_LEN)))) {
         fprintf(stderr, "error: %s %d\n", __FUNCTION__, __LINE__);
+        printBytes("new_ec_key",akc_to_Invert((const char*)my_spkb_x,AKC_KEY_LEN),32);
+        printBytes("new_ec_key",akc_to_Invert((const char*)my_spkb_y,AKC_KEY_LEN),32);
+        printBytes("new_ec_key",akc_to_Invert((const char*)my_spka,AKC_KEY_LEN),32);
+
         goto err;
     }
     
     dgstlen = sizeof(dgst);
     if (!SM2_compute_id_digest(id_md, ID, myid_len, dgst, &dgstlen, ec_key)) {
         fprintf(stderr, "error: %s %d\n", __FUNCTION__, __LINE__);
+        printBytes("SM2_compute_id_digest","error",10);
         goto err;
     }
     
@@ -2724,17 +2729,20 @@ size_t akc_signature_with_privatekey_SM2(const  char *myid,
                                     (const unsigned char *)datasignature, datasignature_len, ID, myid_len,
                                     dgst, &dgstlen, ec_key)) {
         fprintf(stderr, "error: %s %d\n", __FUNCTION__, __LINE__);
+        printBytes("SM2_compute_message_digest","error",10);
         goto err;
     }
     
 #ifdef AKC_CRYPT_LOG
     printf("\n will begin SM2_sign \n");
+    printBytes("will begin SM2_sign","error",10);
 #endif
     
     // sign
     siglen = sizeof(sig);
     if (1 != SM2_sign(type, dgst, (int)dgstlen, sig, &siglen, ec_key)) {
         fprintf(stderr, "error: %s %d\n", __FUNCTION__, __LINE__);
+        printBytes("SM2_sign","error",10);
         goto err;
     }
     

@@ -138,6 +138,11 @@ JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeIsEn
 JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeGeneratekeyPair
   (JNIEnv *, jobject);
 
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePrivateFormat
+        (JNIEnv *, jobject,jbyteArray);
+
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePublickFormat
+        (JNIEnv *, jobject,jbyteArray);
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeSenderRootKey
@@ -154,6 +159,10 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
 JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeReceiverRootKey
   (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
 
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSenderRootKey2
+        (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray,jbyteArray,jbyteArray,jbyteArray);
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeReceiverRootKey2
+        (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray,jbyteArray,jbyteArray,jbyteArray);
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper
  * Method:    NativeChainKey
@@ -217,6 +226,12 @@ JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_Nati
  */
 JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature
   (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray);
+
+JNIEXPORT jbyteArray JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature2
+        (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray,jbyteArray);
+JNIEXPORT jint JNICALL Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature2
+        (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray,jbyteArray);
+
 
 /*
  * Class:     com_view_akcencrypt_api_AKCEncryptWrapper

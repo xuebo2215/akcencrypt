@@ -128,6 +128,19 @@ public class AKCEncryptWrapper {
     public native byte[] NativeGeneratekeyPair();
 
     /**
+     * 私钥格式化输出 2019-01-26 10:29:51
+     * @return 32 位byte数组
+     */
+    public native byte[] NativePrivateFormat(byte[]ka);
+
+    /**
+     * 公钥格式化输出 2019-01-26 10:29:57
+     * @return 64位byte数组
+     */
+    public native byte[] NativePublickFormat(byte[]kb);
+
+
+    /**
      * @param my_idka 我的私钥
      * @param my_otpka 我的选取的onetimekey私钥
      * @param their_spkb 对方签名公钥
@@ -154,6 +167,50 @@ public class AKCEncryptWrapper {
                                                byte[]my_spka,
                                                byte[]my_idka,
                                                byte[]my_otpka);
+
+    /**
+     * sender root key 新接口
+     *
+     * @param myid 我的身份标识
+     * @param my_idka 我的私钥
+     * @param my_idkb 我的公钥
+     * @param my_otpka 我的临时私钥
+     * @param my_otpkb 我的临时公钥
+     * @param theirid 对方身份标识
+     * @param their_idkb 对方公钥
+     * @param their_otpkb 对方临时公钥
+     * @return 32位byte数组
+     */
+    public native byte[] NativeSenderRootKey2(byte[]myid,
+                                              byte[]my_idka,
+                                              byte[]my_idkb,
+                                              byte[]my_otpka,
+                                              byte[]my_otpkb,
+                                              byte[]theirid,
+                                              byte[]their_idkb,
+                                              byte[]their_otpkb);
+    /**
+     * reciver root key 新接口
+     *
+     * @param myid 我的身份标识
+     * @param my_idka 我的私钥
+     * @param my_idkb 我的公钥
+     * @param my_otpka 我的临时私钥
+     * @param my_otpkb 我的临时公钥
+     * @param theirid 对方身份标识
+     * @param their_idkb 对方公钥
+     * @param their_otpkb 对方临时公钥
+     * @return 32位byte数组
+     * */
+    public native byte[] NativeReceiverRootKey2(byte[]myid,
+                                                byte[]my_idka,
+                                                byte[]my_idkb,
+                                                byte[]my_otpka,
+                                                byte[]my_otpkb,
+                                                byte[]theirid,
+                                                byte[]their_idkb,
+                                                byte[]their_otpkb);
+
     /*
     *  使用rootkey生成chainkey
     * @param root_chain_key rootkey
@@ -218,6 +275,29 @@ public class AKCEncryptWrapper {
     public native int NativeVerifySignature(byte[]datasignature,
                                             byte[]signature,
                                             byte[]their_spkb);
+
+    /**
+     * 消息签名 新接口
+     * @param myid 我的身份标识
+     * @param datasignature 待签名数据
+     * @param my_spka 我的签名私钥
+     * @param my_spkb 我的签名公钥
+     * @ Returns signature_out 签名
+     */
+    public native byte[] NativeSignature2(byte[] myid,byte[]datasignature,byte[]my_spka,byte[]my_spkb);
+
+    /**
+     * 消息签名验证 新接口
+     * @param datasignature 待验签数据
+     * @param signature 签名
+     * @param theirid 对方身份标识
+     * @param their_spkb 对方签名公钥
+     *  @ Returns 1 if the signature is valid, 0 if it is invalid.
+     */
+    public native int NativeVerifySignature2(byte[]datasignature,
+                                             byte[]signature,
+                                             byte[]theirid,
+                                             byte[]their_spkb);
 
     /*
     * 公钥加密

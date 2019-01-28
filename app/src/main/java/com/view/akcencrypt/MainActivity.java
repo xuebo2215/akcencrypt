@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0;i< 9;i++){
+                for (int i = 0;i< 0;i++){
 
                     try {
                         int taskIndex = i;

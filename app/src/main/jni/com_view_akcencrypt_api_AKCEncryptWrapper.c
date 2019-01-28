@@ -362,6 +362,48 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeGeneratekeyPair(JNIEnv* env
 }
 
 jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePrivateFormat
+        (JNIEnv *env, jobject thiz,jbyteArray ka)
+{
+    unsigned char *key = (unsigned char*)((*env)->GetByteArrayElements(env, ka, NULL));
+    unsigned char *keyformat =  akc_privateKeyFormat(key);
+
+    (*env)->ReleaseByteArrayElements(env, ka, (jbyte*)key, 0);
+
+    jbyteArray jarray = (*env)->NewByteArray(env, 32);
+    (*env)->SetByteArrayRegion(env, jarray, 0, 32, (jbyte *)keyformat);
+
+    if (keyformat) free(keyformat);
+
+    if (jarray == NULL) {
+        return NULL;
+    }
+
+    return jarray;
+}
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativePublickFormat
+        (JNIEnv *env, jobject thiz,jbyteArray kb)
+{
+    unsigned char *key = (unsigned char*)((*env)->GetByteArrayElements(env, kb, NULL));
+    unsigned char *keyformat =  akc_publickKeyFormat(key);
+
+    (*env)->ReleaseByteArrayElements(env, kb, (jbyte*)key, 0);
+
+    jbyteArray jarray = (*env)->NewByteArray(env, 64);
+    (*env)->SetByteArrayRegion(env, jarray, 0, 64, (jbyte *)keyformat);
+
+    if (keyformat) free(keyformat);
+
+    if (jarray == NULL) {
+        return NULL;
+    }
+
+    return jarray;
+}
+
+jbyteArray
 Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSenderRootKey(JNIEnv* env, jobject thiz,
 																   jbyteArray my_idka,
 																   jbyteArray my_otpka,
@@ -433,7 +475,126 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeReceiverRootKey(JNIEnv* env
 }
 
 jbyteArray
-Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeChainKey(JNIEnv* env, jobject thiz,
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSenderRootKey2(JNIEnv* env, jobject thiz,
+																	jbyteArray myid,
+																	jbyteArray my_idka,
+																	jbyteArray my_idkb,
+																	jbyteArray my_otpka,
+																	jbyteArray my_otpkb,
+																	jbyteArray theirid,
+																    jbyteArray their_idkb,
+																    jbyteArray their_otpkb){
+	size_t myid_len  = (*env)->GetArrayLength(env, myid);
+	const unsigned char *buf_myid = (unsigned char*)((*env)->GetByteArrayElements(env, myid, NULL));
+	const unsigned char *buf_my_idka = (unsigned char*)((*env)->GetByteArrayElements(env, my_idka, NULL));
+	const unsigned char *buf_my_idkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_idkb, NULL));
+
+	const unsigned char *buf_my_otpka = (unsigned char*)((*env)->GetByteArrayElements(env, my_otpka, NULL));
+	const unsigned char *buf_my_otpkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_otpkb, NULL));
+
+	size_t theirid_len  = (*env)->GetArrayLength(env, theirid);
+	const unsigned char *buf_theirid = (unsigned char*)((*env)->GetByteArrayElements(env, theirid, NULL));
+	const unsigned char *buf_their_idkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_idkb, NULL));
+	const unsigned char *buf_their_otpkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_otpkb, NULL));
+
+
+	unsigned char *sender_root_key;
+	int sender_root_key_len  = akc_sender_root_key_SM2(
+			buf_myid,
+			myid_len,
+			buf_my_idka,
+			buf_my_idkb,
+			buf_my_otpka,
+			buf_my_otpkb,
+			buf_theirid,
+			theirid_len,
+			buf_their_idkb,
+			buf_their_otpkb,
+			&sender_root_key);
+
+	(*env)->ReleaseByteArrayElements(env, myid, (jbyte*)buf_myid, 0);
+	(*env)->ReleaseByteArrayElements(env, my_idka, (jbyte*)buf_my_idka, 0);
+	(*env)->ReleaseByteArrayElements(env, my_idkb, (jbyte*)buf_my_idkb, 0);
+	(*env)->ReleaseByteArrayElements(env, my_otpka, (jbyte*)buf_my_otpka, 0);
+	(*env)->ReleaseByteArrayElements(env, my_otpkb, (jbyte*)buf_my_otpkb, 0);
+	(*env)->ReleaseByteArrayElements(env, theirid, (jbyte*)buf_theirid, 0);
+	(*env)->ReleaseByteArrayElements(env, their_idkb, (jbyte*)buf_their_idkb, 0);
+	(*env)->ReleaseByteArrayElements(env, their_otpkb, (jbyte*)buf_their_otpkb, 0);
+
+	jbyteArray jarray = (*env)->NewByteArray(env, sender_root_key_len);
+	(*env)->SetByteArrayRegion(env, jarray, 0, sender_root_key_len, (jbyte *)sender_root_key);
+
+	if (sender_root_key) free(sender_root_key);
+
+	if (jarray == NULL) {
+		return NULL;
+	}
+
+	return jarray;
+}
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeReceiverRootKey2(JNIEnv* env, jobject thiz,
+																	  jbyteArray myid,
+																	  jbyteArray my_idka,
+																	  jbyteArray my_idkb,
+																	  jbyteArray my_otpka,
+																	  jbyteArray my_otpkb,
+																	  jbyteArray theirid,
+																	  jbyteArray their_idkb,
+																	  jbyteArray their_otpkb){
+
+	size_t myid_len  = (*env)->GetArrayLength(env, myid);
+	const unsigned char *buf_myid = (unsigned char*)((*env)->GetByteArrayElements(env, myid, NULL));
+	const unsigned char *buf_my_idka = (unsigned char*)((*env)->GetByteArrayElements(env, my_idka, NULL));
+	const unsigned char *buf_my_idkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_idkb, NULL));
+
+	const unsigned char *buf_my_otpka = (unsigned char*)((*env)->GetByteArrayElements(env, my_otpka, NULL));
+	const unsigned char *buf_my_otpkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_otpkb, NULL));
+
+	size_t theirid_len  = (*env)->GetArrayLength(env, theirid);
+	const unsigned char *buf_theirid = (unsigned char*)((*env)->GetByteArrayElements(env, theirid, NULL));
+	const unsigned char *buf_their_idkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_idkb, NULL));
+	const unsigned char *buf_their_otpkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_otpkb, NULL));
+
+
+	unsigned char *recver_root_key;
+	int recver_root_key_len  = akc_receiver_root_key_SM2(
+			buf_myid,
+			myid_len,
+			buf_my_idka,
+			buf_my_idkb,
+			buf_my_otpka,
+			buf_my_otpkb,
+			buf_theirid,
+			theirid_len,
+			buf_their_idkb,
+			buf_their_otpkb,
+			&recver_root_key);
+
+	(*env)->ReleaseByteArrayElements(env, myid, (jbyte*)buf_myid, 0);
+	(*env)->ReleaseByteArrayElements(env, my_idka, (jbyte*)buf_my_idka, 0);
+	(*env)->ReleaseByteArrayElements(env, my_idkb, (jbyte*)buf_my_idkb, 0);
+	(*env)->ReleaseByteArrayElements(env, my_otpka, (jbyte*)buf_my_otpka, 0);
+	(*env)->ReleaseByteArrayElements(env, my_otpkb, (jbyte*)buf_my_otpkb, 0);
+	(*env)->ReleaseByteArrayElements(env, theirid, (jbyte*)buf_theirid, 0);
+	(*env)->ReleaseByteArrayElements(env, their_idkb, (jbyte*)buf_their_idkb, 0);
+	(*env)->ReleaseByteArrayElements(env, their_otpkb, (jbyte*)buf_their_otpkb, 0);
+
+	jbyteArray jarray = (*env)->NewByteArray(env, recver_root_key_len);
+	(*env)->SetByteArrayRegion(env, jarray, 0, recver_root_key_len, (jbyte *)recver_root_key);
+
+	if (recver_root_key) free(recver_root_key);
+
+	if (jarray == NULL) {
+		return NULL;
+	}
+
+	return jarray;
+}
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeChainKey(	JNIEnv* env, jobject thiz,
 															  jbyteArray root_chain_key,
 															  jint count){
 
@@ -647,6 +808,71 @@ Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature(JNIEnv* env
 	if (buf_their_spkb != NULL){
 		(*env)->ReleaseByteArrayElements(env, their_spkb, (jbyte*)buf_their_spkb, 0);
 	}
+    return res;
+}
+
+
+jbyteArray
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeSignature2(JNIEnv* env, jobject thiz,
+                                                                jbyteArray myid,
+                                                                jbyteArray datasignature,
+                                                                jbyteArray my_spka,
+                                                                jbyteArray my_spkb){
+
+    if (my_spka == NULL) {
+        return NULL;
+    }
+    size_t myid_len  = (*env)->GetArrayLength(env, myid);
+    size_t datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
+    const unsigned char *buf_myid = (unsigned char*)((*env)->GetByteArrayElements(env, myid, NULL));
+    const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+    const unsigned char *buf_spka = (unsigned char*)((*env)->GetByteArrayElements(env, my_spka, NULL));
+    const unsigned char *buf_spkb = (unsigned char*)((*env)->GetByteArrayElements(env, my_spkb, NULL));
+
+    unsigned char *signature;
+    size_t signature_out_len =  akc_signature_with_privatekey_SM2(buf_myid,myid_len,buf_datasignature,datasignature_Len,buf_spka,buf_spkb,&signature);
+
+    (*env)->ReleaseByteArrayElements(env, myid, (jbyte*)buf_myid, 0);
+    (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
+    (*env)->ReleaseByteArrayElements(env, my_spka, (jbyte*)buf_spka, 0);
+    (*env)->ReleaseByteArrayElements(env, my_spkb, (jbyte*)buf_spkb, 0);
+
+    jbyteArray jarray = NULL;
+    if (signature_out_len > 0){
+        jarray = (*env)->NewByteArray(env, signature_out_len);
+        (*env)->SetByteArrayRegion(env, jarray, 0, signature_out_len, (jbyte *)signature);
+    }
+
+    if (signature) free(signature);
+
+    if (jarray == NULL) {
+        return NULL;
+    }
+
+    return jarray;
+}
+
+jint
+Java_com_view_akcencrypt_api_AKCEncryptWrapper_NativeVerifySignature2(JNIEnv* env, jobject thiz,
+                                                                      jbyteArray datasignature,
+                                                                      jbyteArray signature,
+                                                                      jbyteArray theirid,
+                                                                      jbyteArray their_spkb){
+    size_t datasignature_Len  = (*env)->GetArrayLength(env, datasignature);
+    size_t signature_Len  = (*env)->GetArrayLength(env, signature);
+    size_t theirid_Len  = (*env)->GetArrayLength(env, theirid);
+
+    const unsigned char *buf_datasignature = (unsigned char*)((*env)->GetByteArrayElements(env, datasignature, NULL));
+    const unsigned char *buf_signature = (unsigned char*)((*env)->GetByteArrayElements(env, signature, NULL));
+    const unsigned char *buf_theirid = (unsigned char*)((*env)->GetByteArrayElements(env, theirid, NULL));
+    const unsigned char *buf_their_spkb = (unsigned char*)((*env)->GetByteArrayElements(env, their_spkb, NULL));
+
+    int res = akc_verify_signature_with_publickey_SM2(buf_datasignature,datasignature_Len,buf_signature,signature_Len,buf_theirid,theirid_Len,buf_their_spkb);
+
+    (*env)->ReleaseByteArrayElements(env, datasignature, (jbyte*)buf_datasignature, 0);
+    (*env)->ReleaseByteArrayElements(env, signature, (jbyte*)buf_signature, 0);
+    (*env)->ReleaseByteArrayElements(env, their_spkb, (jbyte*)buf_their_spkb, 0);
+    (*env)->ReleaseByteArrayElements(env, theirid, (jbyte*)buf_theirid, 0);
     return res;
 }
 

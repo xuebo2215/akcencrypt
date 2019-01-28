@@ -9,9 +9,12 @@ import com.view.akcencrypt.api.AKCEncryptWrapper;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by xuebo on 2018/5/24.
@@ -57,6 +60,18 @@ public class AKCEncryptTest {
     }
 
 
+    public static List getKeyPair() {
+
+        byte[] key = AKCEncryptWrapper.getInstance().NativeGeneratekeyPair();
+        byte[] key_public = new byte[64];
+        byte[] key_private = new byte[32];
+        System.arraycopy(key, 0, key_public,0, 64);
+        System.arraycopy(key, 64, key_private,0, 32);
+        List keypair = new ArrayList();
+        keypair.add(key_private);
+        keypair.add(key_public);
+        return  keypair;
+    }
 
     public  static void AKCEncryTest() throws UnsupportedEncodingException {
         //测试libakcencrypt.so库
@@ -64,6 +79,48 @@ public class AKCEncryptTest {
 
         byte[] deviceinfo = "deviceinfotest".getBytes("UTF-8");
         encryptWrapper.NativeEnable(deviceinfo);
+
+        byte[]aliceid = "ALICE123@YAHOO.COM".getBytes("UTF-8");
+        List alicekey = AKCEncryptTest.getKeyPair();
+        byte[] alicekey_public = (byte[]) alicekey.get(1);
+        byte[] alicekey_private = (byte[]) alicekey.get(0);
+        Log.d(TAG, "aliceid lenght:\r\n" + aliceid.length);
+
+        List aliceTmpkey = AKCEncryptTest.getKeyPair();
+        byte[] aliceTmpkey_public = (byte[]) aliceTmpkey.get(1);
+        byte[] aliceTmpkey_private = (byte[]) aliceTmpkey.get(0);
+
+        byte[]bobid = "BOB123@YAHOO.COM".getBytes("UTF-8");
+        List bobkey = AKCEncryptTest.getKeyPair();
+        byte[] bobkey_public = (byte[]) bobkey.get(1);
+        byte[] bobkey_private = (byte[]) bobkey.get(0);
+
+        List bobTmpkey = AKCEncryptTest.getKeyPair();
+        byte[] bobTmpkey_public = (byte[]) bobTmpkey.get(1);
+        byte[] bobTmpkey_private = (byte[]) bobTmpkey.get(0);
+
+        Log.d(TAG, "alicekey_public:\r\n" + AKCEncryptTest.getHexString(alicekey_public));
+        Log.d(TAG, "alicekey_private:\r\n" + AKCEncryptTest.getHexString(alicekey_private));
+
+        Log.d(TAG, "alicekey_private format:\r\n" + AKCEncryptTest.getHexString(encryptWrapper.NativePrivateFormat(alicekey_private)));
+        Log.d(TAG, "alicekey_publick format:\r\n" + AKCEncryptTest.getHexString(encryptWrapper.NativePublickFormat(alicekey_public)));
+
+
+        byte[] sendkey = encryptWrapper.NativeSenderRootKey2(aliceid,alicekey_private,alicekey_public,aliceTmpkey_private,aliceTmpkey_public,bobid,bobkey_public,bobTmpkey_public);
+        byte[] recvkey = encryptWrapper.NativeReceiverRootKey2(bobid,bobkey_private,bobkey_public,bobTmpkey_private,bobTmpkey_public,aliceid,alicekey_public,aliceTmpkey_public);
+        Log.d(TAG, "sendkey:\r\n" + AKCEncryptTest.getHexString(sendkey));
+        Log.d(TAG, "recvkey:\r\n" + AKCEncryptTest.getHexString(recvkey));
+
+
+
+        byte[]dataplain = "ALICE123@YAHOO.COMBOB123@YAHOO.COMdf32534525235GFDGDFHDHFFH====GFDSGSDGSDF".getBytes("UTF-8");
+        byte[]dataSignData = encryptWrapper.NativeSignature2(aliceid,dataplain,alicekey_private,alicekey_public);
+        Log.d(TAG, "dataSignData:\r\n" + AKCEncryptTest.getHexString(dataSignData));
+        int verify = encryptWrapper.NativeVerifySignature2(dataplain,dataSignData,aliceid,alicekey_public);
+        Log.d(TAG, "verify:\r\n" + verify);
+
+        int verify2 = encryptWrapper.NativeVerifySignature2(dataplain,dataSignData,aliceid,alicekey_public);
+        Log.d(TAG, "verify2:\r\n" + verify2);
     }
 
     public static byte[] getBytes(char[] chars) {
